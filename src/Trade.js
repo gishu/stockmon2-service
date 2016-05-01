@@ -1,18 +1,21 @@
 var BigNumber = require('bignumber.js');
-function makeTrade(date, stock, qty, price, is_buy){
+
+function makeTrade(date, stock, qty, price, is_buy, calcBrokerage){
+    var price_per_stock = new BigNumber(price);
     return {
         'date': parseDate(date),
         'stock': stock,
         'qty': qty,
         'is_buy': is_buy,
-        'price': new BigNumber(price)
+        'price': price_per_stock,
+        'brokerage': calcBrokerage(qty, price_per_stock)
     };
 }
-function makeBuy(date, stock, qty, price){
-    return makeTrade(date, stock, qty, price, true);
+function makeBuy(date, stock, qty, price, calcBrokerage){
+    return makeTrade(date, stock, qty, price, true, calcBrokerage);
 }
-function makeSale(date, stock, qty, price){
-    return makeTrade(date, stock, qty, price, false);
+function makeSale(date, stock, qty, price, calcBrokerage){
+    return makeTrade(date, stock, qty, price, false, calcBrokerage);
 }
 function makeDividend(date, stock, amount){
     return {
@@ -31,6 +34,7 @@ function parseToBigNumber(value){
     }
     return value;
 }
+
 function makeGain(date, stock, qty, buy_price, sell_price, brokerage_amt) {
     
     var cp = parseToBigNumber(buy_price),

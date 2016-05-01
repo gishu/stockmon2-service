@@ -3,6 +3,7 @@ var util = require('util');
 var BigNumber = require('BigNumber.js');
 var buyPicker = require('./BuyPicker.js');
 var make = require('./Trade.js');
+
 BigNumber.config({ DECIMAL_PLACES: 2 });
 
 function create(id, name) {
@@ -25,7 +26,7 @@ function create(id, name) {
                     _trades[trade.stock].push(buy);
                 } else {
                     var sale = trade;
-                    var current_holding_qty = _.reduce(tradesForStock, function(result, trade){ return result + trade.balance}, 0); 
+                    var current_holding_qty = _.reduce(tradesForStock, function (result, trade) { return result + trade.balance }, 0);
                     if (current_holding_qty < sale.qty) {
                         throw new Error(util.format('Insufficient funds to sell %d of %s. Cur Balance=%d', trade.qty, trade.stock, current_holding_qty));
                     }
@@ -36,7 +37,7 @@ function create(id, name) {
                         var buy = _.find(_trades[trade.stock], { id: buy_id });
                         var qty = _.min([saleQty, buy.balance]);
 
-                        _gains.push(make.makeGain(trade.date, trade.stock, qty, buy.price, trade.price, '100'));
+                        _gains.push(make.makeGain(sale.date, sale.stock, qty, buy.price, sale.price, buy.brokerage.plus(sale.brokerage)));
                         buy.balance -= qty;
                     });
                 }
@@ -55,19 +56,20 @@ function create(id, name) {
 
     function getHoldings() {
         var holdings = _.map(_trades, function (trades, stock) {
-            
+
             var avg_qty = 0,
-                active_trades = _.reject(trades, {balance: 0});
+                active_trades = _.reject(trades, { balance: 0 });
             return {
                 stock: stock,
                 qty: _.reduce(active_trades, function (result, trade) { return result + trade.balance }, 0),
-                avg_price: _.reduce(active_trades, function (result, trade) { 
+                avg_price: _.reduce(active_trades, function (result, trade) {
                     var qty = avg_qty;
                     avg_qty += trade.balance;
-                    return average(qty, result, trade.balance, trade.price); }, new BigNumber(0))
+                    return average(qty, result, trade.balance, trade.price);
+                }, new BigNumber(0))
             };
         });
-        holdings = _.reject(holdings, {qty: 0});
+        holdings = _.reject(holdings, { qty: 0 });
         return _.sortBy(holdings, ['stock']);
         // var holdings = _.values(_holdings);
         // return _.sortBy(holdings, 'stock');

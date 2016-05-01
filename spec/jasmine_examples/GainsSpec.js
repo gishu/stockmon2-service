@@ -17,8 +17,8 @@ describe('GainsComputer', function () {
             a.register(results.trades);
             
             expect(a.getGains()).toEqual([
-                make.makeGain('2009-09-24 00:00:00', 'HDFCBANK', 10, '1030', '1607.1', '100', '5591.1'),
-                make.makeGain('2009-09-24 00:00:00', 'HDFC', 4, '2240', '2705', '100', '1725.31')]);
+                make.makeGain('2009-09-24 00:00:00', 'HDFCBANK', 10, '1030', '1607.1', '176.69', '5514.41'),
+                make.makeGain('2009-09-24 00:00:00', 'HDFC', 4, '2240', '2705', '132.52', '1727.48')]);
                 
             done();
         });
