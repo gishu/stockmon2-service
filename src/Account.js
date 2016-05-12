@@ -6,45 +6,62 @@ var make = require('./Trade.js');
 
 BigNumber.config({ DECIMAL_PLACES: 2 });
 
-function create(id, name) {
-    var _id = id, _name = name,
-        _nextTradeId = 1;
-    var _trades = {},
-        _gains = [];
+function create(name) {
+    var _nextId = -1,
+        _id, _name,
+        _buys = {},
+        _gains = [],
+        _trades = [];
+
+
+    if (_.isPlainObject(name)) {
+        __loadFromState(name);
+    } else {
+        _id = _nextId--;
+        _name = name;
+    }
+
+    function __loadFromState(state) {
+        _id = state.id;
+        _name = state.name;
+        register(state.trades);
+    }
 
     function register(trades) {
-        var copyForRevert = _.cloneDeep(_trades);
         try {
             _.each(trades, function (trade) {
-                var tradesForStock = _trades[trade.stock] = _trades[trade.stock] || [];
+                var tradesForStock = _buys[trade.stock] = _buys[trade.stock] || [],
+                    thisTrade = Object.create(trade),
+                    saleQty;
+
+                thisTrade.id = _nextId--;
+                _trades.push(thisTrade);
 
                 if (trade.is_buy) {
-                    var buy = Object.create(trade);
-                    buy.id = _nextTradeId++;
-                    buy.balance = trade.qty;
+                    thisTrade.balance = trade.qty;
 
-                    _trades[trade.stock].push(buy);
+                    _buys[trade.stock].push(thisTrade);
                 } else {
-                    var sale = trade;
+                    saleQty = trade.qty;
                     var current_holding_qty = _.reduce(tradesForStock, function (result, trade) { return result + trade.balance }, 0);
-                    if (current_holding_qty < sale.qty) {
-                        throw new Error(util.format('Insufficient funds to sell %d of %s. Cur Balance=%d', trade.qty, trade.stock, current_holding_qty));
+                    if (current_holding_qty < saleQty) {
+                        throw new Error(util.format('Insufficient funds to sell %d of %s. Cur Balance=%d', thisTrade.qty, thisTrade.stock, current_holding_qty));
                     }
 
-                    var buyIds = buyPicker(_trades[trade.stock], trade);
-                    var saleQty = trade.qty;
+                    var buyIds = buyPicker(_buys[thisTrade.stock], thisTrade);
+
                     _.each(buyIds, function (buy_id) {
-                        var buy = _.find(_trades[trade.stock], { id: buy_id });
+                        var buy = _.find(_buys[thisTrade.stock], { id: buy_id });
                         var qty = _.min([saleQty, buy.balance]);
 
-                        _gains.push(make.makeGain(sale.date, sale.stock, qty, buy.price, sale.price, buy.brokerage.plus(sale.brokerage)));
+                        _gains.push(make.makeGain(thisTrade.date, thisTrade.stock, qty, buy.price, thisTrade.price, buy.brokerage.plus(thisTrade.brokerage)));
                         buy.balance -= qty;
                     });
                 }
             });
         }
         catch (e) {
-            _trades = copyForRevert;
+            console.error(e);
             throw e;
         }
     }
@@ -55,7 +72,7 @@ function create(id, name) {
     }
 
     function getHoldings() {
-        var holdings = _.map(_trades, function (trades, stock) {
+        var holdings = _.map(_buys, function (trades, stock) {
 
             var avg_qty = 0,
                 active_trades = _.reject(trades, { balance: 0 });
@@ -71,8 +88,6 @@ function create(id, name) {
         });
         holdings = _.reject(holdings, { qty: 0 });
         return _.sortBy(holdings, ['stock']);
-        // var holdings = _.values(_holdings);
-        // return _.sortBy(holdings, 'stock');
     }
 
     function getGains() {
@@ -86,7 +101,8 @@ function create(id, name) {
         getHoldings: getHoldings,
         getId: getId,
         getName: getName,
-        getGains: getGains
+        getGains: getGains,
+        __state: { name: _name, trades: _trades }
     };
 }
 

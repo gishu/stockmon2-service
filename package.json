@@ -6,13 +6,17 @@
   "author": "Gishu Pillai",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.0.0-rc.4",
     "bignumber.js": "^2.3.0",
-    "csv-parse": "^1.0.4"
+    "csv-parse": "^1.0.4",
+    "moment": "^2.13.0"
   },
   "devDependencies": {
     "jasmine": "^2.4.1",
     "jasmine-spec-reporter": "^2.4.0",
     "lodash": "^4.11.1"
   },
-  "scripts":{ "test": "node spec/jasmine_runner.js"}
+  "scripts": {
+    "test": "node spec/jasmine_runner.js"
+  }
 }
