@@ -1,7 +1,7 @@
 describe('CsvParser', function () {
 
-    var _csv_sample1 = ',Date,Stock,Qty,UnitPrice,Amt,Type\n' +
-        ',15-Jul-15,AND BANK,,,600,DIV\n' +
+    var _csv_sample1 = ',Date,Stock,Qty,UnitPrice,Amt,Type,Notes\n' +
+        ',15-Jul-15,AND BANK,,,600,DIV, interim\n' +
         ',17-Aug-10,VOLTAS,,,200,DIV\n' +
         ',24-Sep-09,HDFCBANK,10,1607.1,16071,SOLD\n' +
         ',4-Sep-09,HDFC,4,2705,10820,SOLD\n' +
@@ -31,8 +31,10 @@ describe('CsvParser', function () {
     });
 
     it('should parse and return dividends received in chronological order', function (done) {
-        var dividends = [make.makeDividend('2010-08-16T18:30:00.000Z', 'VOLTAS', '200'),
-            make.makeDividend('2015-07-14T18:30:00.000Z', 'AND BANK', '600')];
+        var dividends = [
+            make.makeDividend('2010-08-16T18:30:00.000Z', 'VOLTAS', '200', ''),
+            make.makeDividend('2015-07-14T18:30:00.000Z', 'AND BANK', '600', 'interim')
+        ];
 
         parse(istream, function (err, results) {
             expect(JSON.stringify(results.dividends)).toEqual(JSON.stringify(dividends));

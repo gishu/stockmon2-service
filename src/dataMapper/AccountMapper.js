@@ -28,6 +28,7 @@ function getAccountMapper() {
                             db.run('create table Accounts (Id INTEGER PRIMARY KEY, Name TEXT);');
                             db.run('create table Buys(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT, FOREIGN KEY(AccountId) REFERENCES Account(Id));');
                             db.run('create table Sales(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT, FOREIGN KEY(AccountId) REFERENCES Account(Id));');
+                            db.run('create table Dividends(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Amount TEXT, Notes TEXT, FOREIGN KEY(AccountId) REFERENCES Account(Id));')
                         });
                     }
                     callback(null, db);
@@ -74,6 +75,15 @@ function getAccountMapper() {
                         }
                     });
                 },
+                (cb) => {
+                    db.all('select * from Dividends where AccountId = ?', [id], (err, rows) => {
+                        if (err) {
+                            cb(err, null);
+                        } else {
+                            cb(null, _.map(rows, (row) => make.makeDividend(moment(row.Date).toDate(), row.Stock, row.Amount, row.Notes)));
+                        }
+                    });
+                },
             ],
                 (err, results) => {
                     var accInfo, loadedState;
@@ -82,12 +92,14 @@ function getAccountMapper() {
                         return;
                     }
                     var trades = _(results[1]).concat(results[2]).sortBy('date').value();
-
+                    var dividends = results[3];
+                    
                     accInfo = results[0];
                     loadedState = {
                         id: accInfo['id'],
                         name: accInfo['name'],
-                        trades: trades
+                        trades: trades,
+                        dividends: dividends
                     };
                     callback(null, account.create(loadedState));
                 }); // end async parallel
@@ -95,12 +107,13 @@ function getAccountMapper() {
     }
 
 
-    function _save(a, callback) {
+    function _save(a, saveCallback) {
         var accountId = 0;
         try {
             _dbPromise.then(db => {
                 var state = a.__state,
-                    insertBuyStmt;
+                    insertBuyStmt, insertSaleStmt, insertDivStmt;
+                //db.on('profile', (sql, time, x) => console.log(sql, time, x));
                 db.serialize(() => {
                     db.run('insert into Accounts(Name) values(?)', [state.name], function (err) {
                         if (err) { throw err; }
@@ -109,28 +122,51 @@ function getAccountMapper() {
 
                         insertBuyStmt = db.prepare('insert into buys(AccountId, Date, Stock, Qty, Price, Brokerage) values(?,?,?,?,?,?)');
                         insertSaleStmt = db.prepare('insert into sales(AccountId, Date, Stock, Qty, Price, Brokerage) values(?,?,?,?,?,?)');
+                        insertDivStmt = db.prepare('insert into dividends(AccountId, Date, Stock, Amount, Notes) values(?,?,?,?,?)');
 
-                        async.each(state.trades, (t, cb) => {
-                            var x = [accountId, moment(t.date).format(), t.stock, t.qty, t.price.toString(), t.brokerage.toString()],
-                                stmt = (t.is_buy ? insertBuyStmt : insertSaleStmt);
+                        async.parallel([
+                            (callback) => {
+                                async.each(state.trades, (t, cb) => {
+                                    var x = [accountId, moment(t.date).format(), t.stock, t.qty, t.price.toString(), t.brokerage.toString()],
+                                        stmt = (t.is_buy ? insertBuyStmt : insertSaleStmt);
 
-                            stmt.run(x, function (err) {
-                                if (err) { cb(err); return; }
-                                cb(null);
+                                    stmt.run(x, function (err) {
+                                        if (err) { cb(err); return; }
+                                        cb(null);
+                                    });
+                                },
+                                    function (err) {
+                                        if (err) { callback(err, null); return; }
+
+                                        insertBuyStmt.finalize();
+                                        insertSaleStmt.finalize();
+                                        callback(null, null);
+                                    });
+                            },
+                            (callback) => {
+                                async.each(state.dividends, (d, cb) => {
+                                    var x = [accountId, moment(d.date).format(), d.stock, d.amt.toString(), d.desc];
+
+                                    insertDivStmt.run(x, function (err) {
+                                        if (err) { cb(err); return; }
+                                        cb(null);
+                                    });
+                                },
+                                    err => {
+                                        if (err) { callback(err, null); return; }
+                                        insertDivStmt.finalize();
+                                        callback(null, null);
+                                    })
+                            }
+                        ],
+                            (err) => {
+                                if (err) {
+                                    saveCallback(err, null)
+                                } else {
+                                    saveCallback(null, accountId);
+                                }
                             });
-
-
-                        },
-                            function (err) {
-                                if (err) { throw err; }
-
-                                callback(null, accountId);
-                                insertBuyStmt.finalize();
-                            });
-
                     });
-
-
                 });
             });
         } catch (err) {

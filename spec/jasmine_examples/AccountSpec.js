@@ -12,7 +12,7 @@ describe('Account', function () {
     });
 
     it('can report holdings sorted alphabetically by stock name', function () {
-        var a = account.create(1, 'Gishu');
+        var a = account.create('Gishu');
 
         var trades = [make.makeBuy('2008-07-14', 'HDFCBANK', 10, '1030', '69.01'),
             make.makeBuy('2009-09-03', 'HDFC', 4, '2705', '181.24'),

@@ -5,11 +5,7 @@ var calcBrokerage = require('./HdfcBrokerage.js');
 
 function parse(csvStream, callback) {
     var parse = require('csv-parse');
-    var parse_options = {
-        skip_empty_lines: true,
-        trim: true,
-        columns: true
-    },
+    var parse_options = { skip_empty_lines: true, trim: true, columns: true },
         trades = new Array(),
         dividends = new Array();
 
@@ -25,7 +21,7 @@ function parse(csvStream, callback) {
                 record = data[looper];
                 if (record['Date'] && record['Stock']) {
                     if (record['Type'] === 'DIV') {
-                        dividends.push(make.makeDividend(record['Date'], record['Stock'], record['Amt'].replace(',', '')));
+                        dividends.push(make.makeDividend(record['Date'], record['Stock'], record['Amt'].replace(',', ''), record['Notes']));
                     }
                     else {
                         price = new BigNumber(record['UnitPrice'].replace(',', ''));
@@ -44,7 +40,10 @@ function parse(csvStream, callback) {
             console.error('Error in Parse Error = %s', e);
             callback(e, null);
         }
-        callback(null, { trades: _.sortBy(trades, 'date'), dividends: _.sortBy(dividends, 'date') });
+        callback(null, {
+            trades: _.sortBy(trades, ['date', 'stock']),
+            dividends: _.sortBy(dividends, ['date', 'stock'])
+        });
 
     }));
 

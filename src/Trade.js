@@ -18,13 +18,7 @@ function makeBuy(date, stock, qty, price, brokerage){
 function makeSale(date, stock, qty, price, brokerage){
     return makeTrade(date, stock, qty, price, false, brokerage);
 }
-function makeDividend(date, stock, amount){
-    return {
-        'date': parseDate(date),
-        'stock': stock,
-        'amount': new BigNumber(amount)
-    };
-}
+
 function parseDate(date){
     return (date instanceof Date ? date: new Date(date));
 }
@@ -50,6 +44,14 @@ function makeGain(date, stock, qty, buy_price, sell_price, brokerage_amt) {
         'SP': sp,
         'brokerage': brokerage,
         'gain': sp.minus(cp).times(qty).minus(brokerage)
+    };
+}
+function makeDividend(date, stock, amt, desc){
+    return {
+        'date' : parseDate(date),
+        'stock' : stock,
+        'amt' : parseToBigNumber(amt),
+        'desc' : desc || ''
     };
 }
 

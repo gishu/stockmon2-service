@@ -11,7 +11,7 @@ function create(name) {
         _id, _name,
         _buys = {},
         _gains = [],
-        _trades = [];
+        _trades = [], _dividends = [];
 
 
     if (_.isPlainObject(name)) {
@@ -25,11 +25,21 @@ function create(name) {
         _id = state.id;
         _name = state.name;
         register(state.trades);
+        addDividends(state.dividends);
     }
 
+    function addDividends(divs) {
+        _.each(divs, row => {
+            var record = Object.create(row);
+
+            record.id = _nextId--;
+            _dividends.push(record);
+
+        });
+    }
     function register(trades) {
         try {
-            _.each(trades, function (trade) {
+            _.each(trades, function (trade, index) {
                 var tradesForStock = _buys[trade.stock] = _buys[trade.stock] || [],
                     thisTrade = Object.create(trade),
                     saleQty;
@@ -91,7 +101,22 @@ function create(name) {
     }
 
     function getGains() {
-        return _gains;
+        var divs = [], entry;
+        _.each(_dividends, record => {
+            var entry = _.find(divs, d => d.stock === record.stock);
+            if (entry) {
+                entry.amt = entry.amt.plus(record.amt);
+            }
+            else {
+                divs.push({ stock: record.stock, date: record.date, amt: record.amt, desc: record.desc });
+            }
+        });
+        return _(divs)
+            .map(d => make.makeDividend(d.date, d.stock, d.amt, d.desc))
+            .concat(_gains)
+            .sortBy(['date', 'stock'])
+            .value();
+
     }
 
     function getId() { return _id; }
@@ -102,7 +127,8 @@ function create(name) {
         getId: getId,
         getName: getName,
         getGains: getGains,
-        __state: { name: _name, trades: _trades }
+        addDividends: addDividends,
+        __state: { name: _name, trades: _trades, dividends: _dividends }
     };
 }
 
