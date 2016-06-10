@@ -1,16 +1,14 @@
 var _ = require('lodash');
 var util = require('util');
 var BigNumber = require('BigNumber.js');
-var buyPicker = require('./BuyPicker.js');
-var make = require('./Trade.js');
+var simulate = require('./Simulation.js');
 
 BigNumber.config({ DECIMAL_PLACES: 2 });
 
 function create(name) {
     var _nextId = -1,
         _id, _name,
-        _buys = {},
-        _gains = [],
+        _holdings = {}, // map of stock to number of units
         _trades = [], _dividends = [];
 
 
@@ -40,33 +38,25 @@ function create(name) {
     function register(trades) {
         try {
             _.each(trades, function (trade, index) {
-                var tradesForStock = _buys[trade.stock] = _buys[trade.stock] || [],
-                    thisTrade = Object.create(trade),
-                    saleQty;
+                var thisTrade = Object.create(trade),
+                    saleQty,
+                    current_holding_qty;
 
                 thisTrade.id = _nextId--;
                 _trades.push(thisTrade);
+                _holdings[trade.stock] = (_holdings[trade.stock] || 0);
 
                 if (trade.is_buy) {
                     thisTrade.balance = trade.qty;
-
-                    _buys[trade.stock].push(thisTrade);
+                    _holdings[trade.stock] += trade.qty;
                 } else {
+
                     saleQty = trade.qty;
-                    var current_holding_qty = _.reduce(tradesForStock, function (result, trade) { return result + trade.balance }, 0);
+                    current_holding_qty = _holdings[trade.stock];
                     if (current_holding_qty < saleQty) {
                         throw new Error(util.format('Insufficient funds to sell %d of %s. Cur Balance=%d', thisTrade.qty, thisTrade.stock, current_holding_qty));
                     }
-
-                    var buyIds = buyPicker(_buys[thisTrade.stock], thisTrade);
-
-                    _.each(buyIds, function (buy_id) {
-                        var buy = _.find(_buys[thisTrade.stock], { id: buy_id });
-                        var qty = _.min([saleQty, buy.balance]);
-
-                        _gains.push(make.makeGain(thisTrade.date, thisTrade.stock, qty, buy.price, thisTrade.price, buy.brokerage.plus(thisTrade.brokerage)));
-                        buy.balance -= qty;
-                    });
+                    _holdings[trade.stock] = _holdings[trade.stock] - saleQty;
                 }
             });
         }
@@ -82,41 +72,29 @@ function create(name) {
     }
 
     function getHoldings() {
-        var holdings = _.map(_buys, function (trades, stock) {
+        var snapshots = simulate(_trades, _dividends);
+        var lastSnapshotKey = _(snapshots).keys().sortBy().last();
+        var holdings = snapshots[lastSnapshotKey].holdings;
 
-            var avg_qty = 0,
-                active_trades = _.reject(trades, { balance: 0 });
+        return _(holdings).map((trades, stock) => {
+            var avg_qty = 0;
             return {
                 stock: stock,
-                qty: _.reduce(active_trades, function (result, trade) { return result + trade.balance }, 0),
-                avg_price: _.reduce(active_trades, function (result, trade) {
+                qty: _.reduce(trades, (result, t) => result + t.balance, 0),
+                avg_price: _.reduce(trades, (result, t) => {
                     var qty = avg_qty;
-                    avg_qty += trade.balance;
-                    return average(qty, result, trade.balance, trade.price);
+                    avg_qty += t.balance;
+                    return average(qty, result, t.balance, t.price);
                 }, new BigNumber(0))
-            };
-        });
-        holdings = _.reject(holdings, { qty: 0 });
-        return _.sortBy(holdings, ['stock']);
+            }
+        })
+            .reject({ qty: 0 })
+            .sortBy(['stock']);
+
+
     }
-
-    function getGains() {
-        var divs = [], entry;
-        _.each(_dividends, record => {
-            var entry = _.find(divs, d => d.stock === record.stock);
-            if (entry) {
-                entry.amt = entry.amt.plus(record.amt);
-            }
-            else {
-                divs.push({ stock: record.stock, date: record.date, amt: record.amt, desc: record.desc });
-            }
-        });
-        return _(divs)
-            .map(d => make.makeDividend(d.date, d.stock, d.amt, d.desc))
-            .concat(_gains)
-            .sortBy(['date', 'stock'])
-            .value();
-
+    function getAnnualStmts() {
+        return simulate(_trades, _dividends);
     }
 
     function getId() { return _id; }
@@ -126,7 +104,7 @@ function create(name) {
         getHoldings: getHoldings,
         getId: getId,
         getName: getName,
-        getGains: getGains,
+        getAnnualStmts: getAnnualStmts,
         addDividends: addDividends,
         __state: { name: _name, trades: _trades, dividends: _dividends }
     };

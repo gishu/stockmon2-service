@@ -3,6 +3,7 @@ describe('Account', function () {
     var path = require('path');
     var async = require('async');
     var BigNumber = require('bignumber.js');
+    var _ = require('lodash');
 
     var make = require('../../src/Trade.js');
     var account = require('../../src/Account.js');
@@ -45,14 +46,17 @@ describe('Account', function () {
                     expect(account.getId()).toEqual(1);
                     expect(account.getName()).toEqual('Mushu');
 
-                    var gains = account.getGains();
-                    expect(gains.length).toEqual(5);
+                    var snapshots = account.getAnnualStmts();
 
-                    expect(gains[2].stock).toEqual('SBI');
-                    expect(gains[2].amt.toString()).toEqual('180');
+                    expect(snapshots[2008].dividends.length).toEqual(3);
+                    var gain = _.last(snapshots[2008].dividends);
+                    expect(gain.stock).toEqual('SBI');
+                    expect(gain.amt.toString()).toEqual('180');
 
-                    expect(gains[4].stock).toEqual('HDFCBANK');
-                    expect(gains[4].qty).toEqual(10);
+                    expect(snapshots[2009].gains.length).toEqual(2);
+                    gain = _.last(snapshots[2009].gains);
+                    expect(gain.stock).toEqual('HDFCBANK');
+                    expect(gain.gain.toString()).toEqual('5594.31');
 
                     done();
                 });

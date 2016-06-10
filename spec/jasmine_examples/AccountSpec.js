@@ -34,11 +34,4 @@ describe('Account', function () {
             new Error('Insufficient funds to sell 5 of HDFCBANK. Cur Balance=0'));
     });
 
-    // it ('logs every trade to trade register', function(){
-    //    pending('TBD - will need trade register'); 
-    // });
-
-    it('logs gains on every sale', function () {
-        pending('TBD - will need trade matcher');
-    });
 });
