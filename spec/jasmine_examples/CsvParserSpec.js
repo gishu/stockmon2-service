@@ -41,7 +41,7 @@ describe('CsvParser', function () {
             done();
         });
     });
-
+    xit('stock names should be case insensitive');
 
 });
 

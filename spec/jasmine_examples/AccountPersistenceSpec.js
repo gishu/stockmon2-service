@@ -5,24 +5,45 @@ describe('Account', function () {
     var BigNumber = require('bignumber.js');
     var _ = require('lodash');
 
+    var fs = require('fs');
     var make = require('../../src/Trade.js');
     var account = require('../../src/Account.js');
     var parse = require('../../src/CsvParser.js');
     var getAccountMapper = require('../../src/dataMapper/AccountMapper.js');
+    var getSnapshotMapper = require('../../src/dataMapper/SnapshotMapper.js');
+    var getDatabase = require('../../src/dataMapper/Database.js');
+
     var istream;
+    var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-        var fs = require('fs');
-        fs.access('./stockmon.sqlite', fs.F_OK, err => {
-            var fileExists = !err;
-            if (fileExists) { fs.unlinkSync('./stockmon.sqlite'); }
-        });
 
-        var csv_path = path.resolve(__dirname, 'datafiles', 'sample_trades.csv');
-        istream = fs.createReadStream(csv_path);
+        try {
+            fs.accessSync('./stockmon.sqlite', fs.F_OK);
+            fs.unlinkSync('./stockmon.sqlite');
+        }
+        catch (e) {
+            if (!(e.code === 'ENOENT')) {
+                console.log(e);
+            }
+
+        }
+
+        database = getDatabase();
+        mapper = getAccountMapper(database);
+        snapshotMapper = getSnapshotMapper(database);
     });
 
-    it('can be persisted', function (done) {
+    afterEach(done => {
+        database.close( err => {
+            done();
+        });
+    })
+
+    it('can persists general info, trades and dividends', function (done) {
+        var csv_path = path.resolve(__dirname, 'datafiles', 'sample_trades.csv');
+        istream = fs.createReadStream(csv_path);
+
         parse(istream, function (err, results) {
             expect(err).toBeNull();
             var inMemAccount, fromDisk;
@@ -30,31 +51,42 @@ describe('Account', function () {
             inMemAccount.register(results.trades);
             inMemAccount.addDividends(results.dividends);
 
-            var mapper = getAccountMapper();
             async.waterfall([
                 (cb) => {
-                    mapper.save(inMemAccount, (err, id) => {
-                        cb(null, id);
+                    mapper.save(inMemAccount, (err, account) => {
+                        cb(null, account);
                     });
                 },
-                (id, cb) => { var fromDisk = mapper.load(id, (err, account) => { cb(null, account); }); }
+                (account, cb) => {
+                    var fromDisk = mapper.load(account.id(), (err, account) => {
+                        cb(err, account);
+                    });
+                },
+                // TODO: probably belongs in Account.js
+                (account, cb) => {
+                    account.getAnnualStmts((err, snapshots) => {
+                        cb(err, account, snapshots);
+                    });
+                }
             ],
-                function (err, account) {
+                function (err, account, snapshots) {
+                    var gain, snapshot;
+
                     if (err) {
                         done.fail(err.message);
                     }
-                    expect(account.getId()).toEqual(1);
+                    expect(account.id()).toEqual(1);
                     expect(account.getName()).toEqual('Mushu');
 
-                    var snapshots = account.getAnnualStmts();
-
-                    expect(snapshots[2008].dividends.length).toEqual(3);
-                    var gain = _.last(snapshots[2008].dividends);
+                    snapshot = _.find(snapshots, { 'year': 2008 });
+                    expect(snapshot.dividends.length).toEqual(4);
+                    gain = _.last(snapshot.dividends);
                     expect(gain.stock).toEqual('SBI');
-                    expect(gain.amt.toString()).toEqual('180');
+                    expect(gain.amount.toString()).toEqual('90');
 
-                    expect(snapshots[2009].gains.length).toEqual(2);
-                    gain = _.last(snapshots[2009].gains);
+                    snapshot = _.find(snapshots, { 'year': 2009 })
+                    expect(snapshot.gains.length).toEqual(2);
+                    gain = _.last(snapshot.gains);
                     expect(gain.stock).toEqual('HDFCBANK');
                     expect(gain.gain.toString()).toEqual('5594.31');
 
@@ -62,4 +94,10 @@ describe('Account', function () {
                 });
         });
     });
+
+    it('ERR - cannot persist annual stmts until account has been saved once');
+    it('ERR - cannot persist annual stmts until all trades and dividends are saved');
+    it('Split buy into multiple sales - brokerage split')
+    
+
 });

@@ -27,17 +27,17 @@ function parse(csvStream, callback) {
                         price = new BigNumber(record['UnitPrice'].replace(',', ''));
                         qty = parseInt(record['Qty']);
                         if (record['Type'] != 'SOLD') {
-                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price)));
+                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, true)));
                         }
                         else {
-                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price)));
+                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, false)));
                         }
                     }
                 }
             }
         }
         catch (e) {
-            console.error('Error in Parse Error = %s', e);
+            console.error('Error in Parse Error = %s. Records Processed=%d', e, looper);
             callback(e, null);
         }
         callback(null, {
