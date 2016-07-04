@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var buyPicker = require('./BuyPicker.js');
+var match = require('./BuyPicker.js');
 var brokPath = './HdfcBrokerage.js';
 var getBrokerage = require(brokPath);
 var make = require('./Trade.js');
@@ -42,10 +42,11 @@ function _process(finYearRange, trades, dividends, opening_holdings) {
     var gains = [],
         divs = [],
         holdings = _.cloneDeep(opening_holdings),
+        mapSales = {},
         divEntry;
 
     _.forEach(trades, t => {
-        var sale, buy, buyIds;
+        var sale, buy;
         holdings[t.stock] = holdings[t.stock] || [];
         if (t.is_buy) {
             buy = Object.create(t);
@@ -54,24 +55,36 @@ function _process(finYearRange, trades, dividends, opening_holdings) {
         }
         else {
             sale = Object.create(t);
-            buyIds = buyPicker(holdings[sale.stock], sale);
-
-            _.each(buyIds, function (id) {
-                var buy = _.find(holdings[sale.stock], { id: id });
-                var qty = _.min([sale.qty, buy.balance]);
-                var buyBrokerage = getBrokerage(sale.qty, buy.price, buy.is_buy);
-                gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, buyBrokerage.plus(sale.brokerage)));
-                buy.balance -= qty;
-                if (buy.balance === 0) {
-                    _.remove(holdings[sale.stock], { id: id });
-                }
-            });
+            mapSales[sale.stock] = mapSales[sale.stock] || [];
+            mapSales[sale.stock].push(sale);
         }
     });
 
+    _.forOwn(mapSales, (sales, stock) => {
+        var matchedTrades = match(holdings[stock], sales);
+        _.forOwn(matchedTrades, (buyIds, saleId) => {
+            var sale = _.find(sales, { id: _.toInteger(saleId) });
+            var saleQty = sale.qty;
+
+            _.each(buyIds, id => {
+                var buy = _.find(holdings[sale.stock], { id: id });
+                var qty = _.min([saleQty, buy.balance]);
+                var buyBrokerage = getBrokerage(qty, buy.price, true);
+                gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, buyBrokerage.plus(sale.brokerage)));
+                buy.balance -= qty;
+                saleQty -= qty;
+                if (buy.balance === 0) {
+                    _.remove(holdings[sale.stock], { id: id });
+                }
+            })
+
+        });
+    });
+
+
     return {
         year: finYearRange[0].year(),
-        gains: gains,
+        gains: _.sortBy(gains, ['date', 'stock']),
         dividends: dividends,
         holdings: holdings
     };

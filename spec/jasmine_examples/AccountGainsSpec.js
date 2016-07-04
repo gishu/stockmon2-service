@@ -39,7 +39,7 @@ describe('Account', function () {
                 snapshot = _.find(snapshots, { year: 2009 });
                 expect(_.map(snapshot.gains, 'stock')).toEqual(['HDFC', 'HDFCBANK']);
                 expect(_.map(snapshot.gains, 'qty')).toEqual([4, 10]);
-                expect(_.map(snapshot.gains, g => g.gain.toString())).toEqual(['1727.48', '5594.31']);
+                expect(_.map(snapshot.gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46']);
 
                 expect(snapshot.dividends.length).toEqual(0);
 

@@ -32,6 +32,8 @@ describe('Account', function () {
         });
 
     });
+
+   
     it('should not report holdings if balance qty is zero');
 
     it('throws in case of insufficient balance for a sale', function () {

@@ -19,9 +19,9 @@ describe('CsvParser', function () {
 
     it('should parse and return chronological trades', function (done) {
         var expected = [make.makeBuy('2008-07-13T18:30:00.000Z', 'HDFCBANK', 10, '1030', '69.01'),
-            make.makeSale('2009-09-03T18:30:00.000Z', 'HDFC', 4, '2705', '72.49'),
+            make.makeSale('2009-09-03T18:30:00.000Z', 'HDFC', 4, '2705', '75.09'),
             make.makeBuy('2009-09-22T18:30:00.000Z', 'BALRAM', 83, '119.5', '66.45'),
-            make.makeSale('2009-09-23T18:30:00.000Z', 'HDFCBANK', 10, '1607.1', '107.68')
+            make.makeSale('2009-09-23T18:30:00.000Z', 'HDFCBANK', 10, '1607.1', '111.53')
         ];
 
         parse(istream, function (err, results) {

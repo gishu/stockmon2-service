@@ -82,8 +82,7 @@ function create(name) {
 
     function getHoldings(callback) {
         simulate(_holdings, _trades, _dividends, (err, snapshots) => {
-            var lastSnapshotKey = _(snapshots).keys().sortBy().last();
-            var holdings = snapshots[lastSnapshotKey].holdings;
+            var holdings = _.last(snapshots).holdings;
 
             holdings = _(holdings).map((trades, stock) => {
                 var avg_qty = 0;

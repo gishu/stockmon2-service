@@ -2,6 +2,7 @@
 var fs = require('fs');
 var async = require('async');
 var sqlite = require('sqlite3').verbose();
+var log = require('debug')('db')
 
 module.exports = function () {
 
@@ -21,7 +22,9 @@ module.exports = function () {
                 function (db_exists, callback) {
                     var db = new sqlite.Database(__DB_NAME);
                     var path = require('path');
+
                     if (!db_exists) {
+                        log('Creating DB at' + path.resolve(__DB_NAME));
                         db.serialize(() => {
                             async.series([
                                 cb => {
@@ -58,7 +61,9 @@ module.exports = function () {
                                 },
                             ],
                                 (err, results) => {
-                                     callback(err, db); }
+                                    log('Done ' + (err ? 'with' : 'without') + ' errors');
+                                    callback(err, db);
+                                }
                             );
                         });
                     }

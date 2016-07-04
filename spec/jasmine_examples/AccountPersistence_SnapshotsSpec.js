@@ -5,7 +5,6 @@ describe('Account', function () {
     var BigNumber = require('bignumber.js');
     var _ = require('lodash');
 
-    var fs = require('fs');
     var make = require('../../src/Trade.js');
     var account = require('../../src/Account.js');
     var parse = require('../../src/CsvParser.js');
@@ -13,21 +12,12 @@ describe('Account', function () {
     var getSnapshotMapper = require('../../src/dataMapper/SnapshotMapper.js');
     var getDatabase = require('../../src/dataMapper/Database.js');
 
-    var istream;
+    var helpers = require('../helpers/test_helper.js');
+
     var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-
-        try {
-            fs.accessSync('./stockmon.sqlite', fs.F_OK);
-            fs.unlinkSync('./stockmon.sqlite');
-        }
-        catch (e) {
-            if (!(e.code === 'ENOENT')) {
-                console.log(e);
-            }
-
-        }
+        helpers.deleteDb();
 
         database = getDatabase();
         mapper = getAccountMapper(database);
@@ -43,20 +33,18 @@ describe('Account', function () {
     describe('Annual Stmts', () => {
 
         var fromDisk,
-            inMemAccount, 
+            inMemAccount,
             savedAccountId;
 
 
 
         beforeEach((done) => {
             inMemAccount = account.create('Mushu'),
-            savedAccountId = 0;
+                savedAccountId = 0;
 
-            var csv_path = path.resolve(__dirname, 'datafiles', 'trades_scenario2.csv');
-            istream = fs.createReadStream(csv_path);
             async.waterfall([
                 (cb) => {           // load trades from CSV into account
-                    parse(istream, (err, results) => {
+                    parse(helpers.getCsvStream('trades_scenario2.csv'), (err, results) => {
                         if (err) {
                             cb(err, null);
                             return;
@@ -101,14 +89,15 @@ describe('Account', function () {
         it('can persist gains', done => {
 
             snapshotMapper.loadSnapshots(savedAccountId, [2008, 2009], (err, snapshots) => {
-                var snapshot = _.find(snapshots, {year: 2008});
+                var snapshot = _.find(snapshots, { year: 2008 });
                 expect(snapshot.gains.length).toBe(0);
-                
-                
+
+
                 snapshot = _.find(snapshots, { year: 2009 });
                 expect(_.map(snapshot.gains, 'stock')).toEqual(['HDFC', 'HDFCBANK', 'SBI', 'ONGC', 'HDFC']);
                 expect(_.map(snapshot.gains, 'qty')).toEqual([4, 10, 5, 10, 11]);
-                expect(_.map(snapshot.gains, g => g.gain.toString())).toEqual(['1727.48', '5594.31', '5834.42', '4066.66', '10988.77']);
+
+                expect(_.map(snapshot.gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46', '5831.64', '4063.77', '10981.3']);
                 done();
             })
 
@@ -125,13 +114,13 @@ describe('Account', function () {
             });
         });
 
-        it('can persist dividends', done =>{
+        it('can persist dividends', done => {
             snapshotMapper.loadSnapshots(savedAccountId, [2008, 2009], (err, snapshots) => {
-                var snapshot = _.find(snapshots, {year: 2008});
+                var snapshot = _.find(snapshots, { year: 2008 });
                 expect(snapshot.dividends[0].stock).toBe("SBI");
                 expect(snapshot.dividends[0].amount.toString()).toBe("123");
-                
-                
+
+
                 snapshot = _.find(snapshots, { year: 2009 });
                 expect(snapshot.dividends.length).toBe(0);
                 done();

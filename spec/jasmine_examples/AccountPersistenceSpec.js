@@ -5,7 +5,6 @@ describe('Account', function () {
     var BigNumber = require('bignumber.js');
     var _ = require('lodash');
 
-    var fs = require('fs');
     var make = require('../../src/Trade.js');
     var account = require('../../src/Account.js');
     var parse = require('../../src/CsvParser.js');
@@ -13,21 +12,12 @@ describe('Account', function () {
     var getSnapshotMapper = require('../../src/dataMapper/SnapshotMapper.js');
     var getDatabase = require('../../src/dataMapper/Database.js');
 
-    var istream;
+    var helpers = require('../helpers/test_helper.js');
+
     var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-
-        try {
-            fs.accessSync('./stockmon.sqlite', fs.F_OK);
-            fs.unlinkSync('./stockmon.sqlite');
-        }
-        catch (e) {
-            if (!(e.code === 'ENOENT')) {
-                console.log(e);
-            }
-
-        }
+        helpers.deleteDb();
 
         database = getDatabase();
         mapper = getAccountMapper(database);
@@ -35,16 +25,14 @@ describe('Account', function () {
     });
 
     afterEach(done => {
-        database.close( err => {
+        database.close(err => {
             done();
         });
     })
 
     it('can persists general info, trades and dividends', function (done) {
-        var csv_path = path.resolve(__dirname, 'datafiles', 'sample_trades.csv');
-        istream = fs.createReadStream(csv_path);
 
-        parse(istream, function (err, results) {
+        parse(helpers.getCsvStream('sample_trades.csv'), function (err, results) {
             expect(err).toBeNull();
             var inMemAccount, fromDisk;
             inMemAccount = account.create('Mushu');
@@ -88,7 +76,7 @@ describe('Account', function () {
                     expect(snapshot.gains.length).toEqual(2);
                     gain = _.last(snapshot.gains);
                     expect(gain.stock).toEqual('HDFCBANK');
-                    expect(gain.gain.toString()).toEqual('5594.31');
+                    expect(gain.gain.toString()).toEqual('5590.46');
 
                     done();
                 });
@@ -98,6 +86,6 @@ describe('Account', function () {
     it('ERR - cannot persist annual stmts until account has been saved once');
     it('ERR - cannot persist annual stmts until all trades and dividends are saved');
     it('Split buy into multiple sales - brokerage split')
-    
+
 
 });
