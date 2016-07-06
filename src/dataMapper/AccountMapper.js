@@ -62,7 +62,7 @@ function getAccountMapper(database) {
                                     acb(err, null);
                                 } else {
                                     acb(null, _.map(rows, (row) => {
-                                        var sale = make.makeSale(moment(row.Date).toDate(), row.Stock, row.Qty, row.Price, row.Brokerage);
+                                        var sale = make.makeSale(moment(row.Date), row.Stock, row.Qty, row.Price, row.Brokerage);
                                         sale.id = row.Id;
                                         return sale;
                                     }));
@@ -127,7 +127,7 @@ function getAccountMapper(database) {
                     async.parallel([
                         (callback) => {
                             async.each(state.trades, (t, cb) => {
-                                var x = [accountId, moment(t.date).format(), t.stock, t.qty, t.price.toString(), t.brokerage.toString()],
+                                var x = [accountId, t.date.toISOString(), t.stock, t.qty, t.price.toString(), t.brokerage.toString()],
                                     stmt = (t.is_buy ? insertBuyStmt : insertSaleStmt);
 
                                 stmt.run(x, function (err) {
@@ -144,7 +144,7 @@ function getAccountMapper(database) {
                         },
                         (callback) => {
                             async.each(state.dividends, (d, cb) => {
-                                var x = [accountId, moment(d.date).format(), d.stock, d.amount.toString(), d.desc];
+                                var x = [accountId, d.date.toISOString(), d.stock, d.amount.toString(), d.desc];
 
                                 insertDivStmt.run(x, function (err) {
                                     if (err) { cb(err); return; }

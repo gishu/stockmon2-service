@@ -12,13 +12,14 @@ function createStringStream(str) {
 }
 
 function deleteDb() {
+    var log = require('debug')('db');
     try {
         fs.accessSync('./stockmon.sqlite', fs.F_OK);
         fs.unlinkSync('./stockmon.sqlite');
     }
     catch (e) {
         if (!(e.code === 'ENOENT')) {
-            console.log(e);
+            log(e);
         }
 
     }

@@ -23,7 +23,7 @@ function makeSale(date, stock, qty, price, brokerage) {
 }
 
 function parseDate(date) {
-    return (date instanceof Date ? date : new Date(date));
+    return (moment.isMoment(date) ? date : moment(date));
 }
 
 function parseToBigNumber(value) {

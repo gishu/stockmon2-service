@@ -2,6 +2,7 @@ var _ = require('lodash');
 var BigNumber = require('bignumber.js');
 var make = require('./Trade.js');
 var calcBrokerage = require('./HdfcBrokerage.js');
+var log = require('debug')('parser');
 
 function parse(csvStream, callback) {
     var parse = require('csv-parse');
@@ -37,7 +38,7 @@ function parse(csvStream, callback) {
             }
         }
         catch (e) {
-            console.error('Error in Parse Error = %s. Records Processed=%d', e, looper);
+            log('Error in Parse Error = %s. Records Processed=%d', e, looper);
             callback(e, null);
         }
         callback(null, {

@@ -21,12 +21,13 @@ describe('Account', function () {
             make.makeBuy('2009-09-13', 'COALIND', 10, '270', '18.09'),
             make.makeBuy('2009-09-22', 'HDFC', 76, '1190.5', '606.20'),
             make.makeSale('2009-09-23', 'HDFCBANK', 5, '1607.1', '53.84'),
-            make.makeSale('2009-09-31', 'COALIND', 10, '290', '19.43')
+            make.makeSale('2009-09-30', 'COALIND', 10, '290', '19.43')
         ];
         var expected_holdings = [{ stock: 'HDFC', qty: 80, avg_price: new BigNumber('1266.23') },
             { stock: 'HDFCBANK', qty: 5, avg_price: new BigNumber('1030') }];
         a.register(trades);
         a.getHoldings((err, holdings) => {
+            expect(err).toBeNull();
             expect(holdings).toJSONEqual(expected_holdings);
             done();
         });

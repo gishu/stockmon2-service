@@ -2,6 +2,7 @@ var _ = require('lodash');
 var util = require('util');
 var BigNumber = require('BigNumber.js');
 var simulate = require('./Simulation.js');
+var log = require('debug')('account');
 
 BigNumber.config({ DECIMAL_PLACES: 2 });
 
@@ -70,7 +71,7 @@ function create(name) {
             });
         }
         catch (e) {
-            console.error(e);
+            log(e);
             throw e;
         }
     }
@@ -82,6 +83,10 @@ function create(name) {
 
     function getHoldings(callback) {
         simulate(_holdings, _trades, _dividends, (err, snapshots) => {
+            if (err){
+                log('Simulation failed with ' + err);
+                callback(err, null);
+            }
             var holdings = _.last(snapshots).holdings;
 
             holdings = _(holdings).map((trades, stock) => {

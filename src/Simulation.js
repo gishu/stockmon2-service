@@ -12,8 +12,8 @@ function _getFinYearRange(firstTrade, firstDiv) {
     var date1, date2, earliestDate,
         finYearStart;
 
-    if (firstTrade) { date1 = moment(firstTrade.date); }
-    if (firstDiv) { date2 = moment(firstDiv.date); }
+    if (firstTrade) { date1 = firstTrade.date; }
+    if (firstDiv) { date2 = firstDiv.date; }
 
     if (date1) {
         if (date2) {
@@ -34,7 +34,7 @@ function _getFinYearRange(firstTrade, firstDiv) {
 }
 
 function _filterByYear(datedEntries, finYearRange) {
-    return _.reject(datedEntries, e => moment(e.date).isBefore(finYearRange[0]) || moment(e.date).isAfter(finYearRange[1]));
+    return _.reject(datedEntries, e => e.date.isBefore(finYearRange[0]) || e.date.isAfter(finYearRange[1]));
 }
 
 // process trades of the Year to determine gains,dividends and closing stmt of holdings

@@ -1,12 +1,12 @@
 describe('CsvParser', function () {
 
     var _csv_sample1 = ',Date,Stock,Qty,UnitPrice,Amt,Type,Notes\n' +
-        ',15-Jul-15,AND BANK,,,600,DIV, interim\n' +
-        ',17-Aug-10,VOLTAS,,,200,DIV\n' +
-        ',24-Sep-09,HDFCBANK,10,1607.1,16071,SOLD\n' +
-        ',4-Sep-09,HDFC,4,2705,10820,SOLD\n' +
-        ',23-Sep-09,BALRAM,83,119.5,9918.5,\n' +
-        ',14-Jul-08,HDFCBANK,10,1030,10300,\n';
+        ',2015-07-15,AND BANK,,,600,DIV, interim\n' +
+        ',2010-08-17,VOLTAS,,,200,DIV\n' +
+        ',2009-09-24,HDFCBANK,10,1607.1,16071,SOLD\n' +
+        ',2009-09-04,HDFC,4,2705,10820,SOLD\n' +
+        ',2009-09-23,BALRAM,83,119.5,9918.5,\n' +
+        ',2008-07-14,HDFCBANK,10,1030,10300,\n';
 
     var helper = require('../helpers/test_helper.js');
     var parse = require('../../src/CsvParser.js');

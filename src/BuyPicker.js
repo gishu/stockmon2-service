@@ -12,7 +12,7 @@ module.exports = function (buys, sales) {
     var matchedTrades = {};
 
     function getBuysBefore(saleDate) {
-        return _.filter(buysQueue, b => moment(b.date).isBefore(moment(saleDate)) && b.balance > 0);
+        return _.filter(buysQueue, b => b.date.isBefore(saleDate) && b.balance > 0);
     }
     function matchSale(sale) {
         var buys = getBuysBefore(sale.date),
@@ -21,7 +21,7 @@ module.exports = function (buys, sales) {
             saleQty,
             buy, looper = 0, qty;
 
-        groups = _.partition(buys, b => moment(b.date).isSameOrBefore(oneYearBeforeSale));
+        groups = _.partition(buys, b => b.date.isSameOrBefore(oneYearBeforeSale));
         longTermBuys = groups[0].sort(ascPriceComparer);
         shortTermBuys = groups[1].sort(descPriceComparer);
 
