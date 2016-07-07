@@ -63,7 +63,7 @@ module.exports = function getSnapshotMapper(database) {
                     },
                     cb => {
                         db.all(
-                            'select r.AccountId, r.Year, r.Qty, b.Stock, b.Id as BuyId, b.Price as BuyPrice, s.Id as SaleId, s.Price as SalePrice, r.Brokerage, r.Gain' +
+                            'select r.AccountId, r.Year, r.Qty, b.Stock, b.Id as BuyId, b.Price as BuyPrice, s.Id as SaleId, s.Price as SalePrice, r.Brokerage, r.Gain, r.IsShortTerm' +
                             ' from snapshot_gains r' +
                             ' inner join buys b on r.BuyId = b.Id' +
                             ' inner join sales s on r.SaleId = s.Id' +
@@ -73,7 +73,7 @@ module.exports = function getSnapshotMapper(database) {
                                 if (err) { cb(err); return; }
 
                                 cb(null,
-                                    _.map(rows, row => make.makeGain(moment(row.Date), row.Stock, row.Qty, row.BuyId, row.BuyPrice, row.SaleId, row.SalePrice, row.Brokerage, row.Gain)));
+                                    _.map(rows, row => make.makeGain(moment(row.Date), row.Stock, row.Qty, row.BuyId, row.BuyPrice, row.SaleId, row.SalePrice, row.Brokerage, row.Gain, (row.IsShortTerm !== 0))));
                             }
                         )
                     },
@@ -151,10 +151,10 @@ module.exports = function getSnapshotMapper(database) {
             try {
                 // saleId => date, SPrice, stock
                 // buyid => CPrice 
-                var insertStmt = db.prepare('insert into snapshot_gains(AccountId, Year, SrNo, Qty, BuyId, SaleId, Brokerage, Gain) values(?,?,?,?,?,?,?,?)');
+                var insertStmt = db.prepare('insert into snapshot_gains(AccountId, Year, SrNo, Qty, BuyId, SaleId, Brokerage, Gain, IsShortTerm) values(?,?,?,?,?,?,?,?,?)');
 
                 async.forEachOf(gains, (gain, index, gainCallback) => {
-                    var values = [accountId, year, index, gain.qty, gain.buyId, gain.saleId, gain.brokerage.toString(), gain.gain.toString()];
+                    var values = [accountId, year, index, gain.qty, gain.buyId, gain.saleId, gain.brokerage.toString(), gain.gain.toString(), (gain.isShortTerm ? 1 : 0) ];
 
                     insertStmt.run(values, err => {
                         gainCallback(err);

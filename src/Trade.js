@@ -33,7 +33,7 @@ function parseToBigNumber(value) {
     return value;
 }
 
-function makeGain(date, stock, qty, buyId, buy_price, saleId, sell_price, brokerage_amt) {
+function makeGain(date, stock, qty, buyId, buy_price, saleId, sell_price, brokerage_amt, isShortTerm) {
 
     var cp = parseToBigNumber(buy_price),
         sp = parseToBigNumber(sell_price),
@@ -48,7 +48,8 @@ function makeGain(date, stock, qty, buyId, buy_price, saleId, sell_price, broker
         'saleId': saleId,
         'SP': sp,
         'brokerage': brokerage,
-        'gain': sp.minus(cp).times(qty).minus(brokerage)
+        'gain': sp.minus(cp).times(qty).minus(brokerage),
+        'isShortTerm': isShortTerm
     };
 }
 function makeDividend(date, stock, amount, desc) {

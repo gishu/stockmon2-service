@@ -18,7 +18,9 @@ describe('TradeMatcher', () => {
             ['2010-03-02', 20, '50']
         ]),
             sales = getSales([['2010-10-01', 30, '250']]);
-        expect(matcher(buys, sales)).toEqual({ '4': [1, 2] });
+        expect(matcher(buys, sales)).toEqual([
+            { saleId: 4, buyIds: [1, 2] }
+        ]);
     });
 
     it('throws if saleQty exceeds available holdings', () => {
@@ -40,10 +42,11 @@ describe('TradeMatcher', () => {
             ['2010-01-01', 15, '250']
         ]);
 
-        expect(matcher(buys, sales)).toEqual({
-            '3': [1],
-            '4': [2]
-        });
+        expect(matcher(buys, sales)).toEqual([
+            { saleId: 3, buyIds: [1] },
+            { saleId: 4, buyIds: [2] }
+        ]);
+
     });
 
     it('matches buys with minimum Short Term gain to reduce capital gains tax', () => {
@@ -56,9 +59,9 @@ describe('TradeMatcher', () => {
             ['2009-03-01', 10, '300']
         ]);
 
-        expect(matcher(buys, sales)).toEqual({
-            '4': [3]            // all short term >> min gain & ST tax
-        });
+        expect(matcher(buys, sales)).toEqual([
+            { saleId: 4, buyIds: [3] }
+        ]);
 
     });
 
@@ -84,35 +87,33 @@ describe('TradeMatcher', () => {
             ['2015-02-24', 500, '56.75'],
         ]);
 
-        expect(matcher(buys, sales)).toEqual({
-            '8': [1, 2], // ST
-            '9': [1], //ST,
-            '10':[3], // ST
-            
-            '11':[2], //LT
-            '12':[4],
-            '13':[3,4] // 3 LT, 4 ST
+        expect(matcher(buys, sales)).toEqual(
+            [
+                { saleId: 9, buyIds: [1] },
+                { saleId: 8, buyIds: [1, 2] },
+                { saleId: 11, buyIds: [2] },
+                { saleId: 10, buyIds: [3] },
+                { saleId: 13, buyIds: [3, 4] },
+                { saleId: 12, buyIds: [4] }
+            ]);
+});
 
-        });
-
+// factory method to create trades given [date, qty, price] 
+function getBuys(rows) {
+    return _.map(rows, r => {
+        var buy = make.makeBuy.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
+        buy.balance = buy.qty;
+        buy.id = id++;
+        return buy;
     });
+}
+function getSales(rows) {
+    return _.map(rows, r => {
+        var sale = make.makeSale.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
 
-    // factory method to create trades given [date, qty, price] 
-    function getBuys(rows) {
-        return _.map(rows, r => {
-            var buy = make.makeBuy.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
-            buy.balance = buy.qty;
-            buy.id = id++;
-            return buy;
-        });
-    }
-    function getSales(rows) {
-        return _.map(rows, r => {
-            var sale = make.makeSale.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
-
-            sale.id = id++;
-            return sale;
-        });
-    }
+        sale.id = id++;
+        return sale;
+    });
+}
 
 });

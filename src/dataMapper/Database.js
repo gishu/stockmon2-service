@@ -48,7 +48,7 @@ module.exports = function () {
                                         ' FOREIGN KEY(AccountId) REFERENCES Accounts(Id) )', [], err => cb(err));
                                 },
                                 cb => {
-                                    db.run('CREATE TABLE Snapshot_Gains(AccountId INTEGER, Year INTEGER, SrNo INTEGER, Qty INTEGER, BuyId INTEGER, SaleId INTEGER, Brokerage TEXT, Gain TEXT,' +
+                                    db.run('CREATE TABLE Snapshot_Gains(AccountId INTEGER, Year INTEGER, SrNo INTEGER, Qty INTEGER, BuyId INTEGER, SaleId INTEGER, Brokerage TEXT, Gain TEXT, IsShortTerm INTEGER,' +
                                         ' PRIMARY KEY(AccountId, Year, SrNo),' +
                                         ' FOREIGN KEY(BuyId) REFERENCES Buys(Id),' +
                                         ' FOREIGN KEY(SaleId) REFERENCES Sales(Id),' +

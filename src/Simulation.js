@@ -4,6 +4,7 @@ var brokPath = './HdfcBrokerage.js';
 var getBrokerage = require(brokPath);
 var make = require('./Trade.js');
 var moment = require('moment');
+var util = require('util');
 
 // simulation of trades to annual snapshots
 
@@ -62,15 +63,28 @@ function _process(finYearRange, trades, dividends, opening_holdings) {
 
     _.forOwn(mapSales, (sales, stock) => {
         var matchedTrades = match(holdings[stock], sales);
-        _.forOwn(matchedTrades, (buyIds, saleId) => {
-            var sale = _.find(sales, { id: _.toInteger(saleId) });
-            var saleQty = sale.qty;
+        _.each(matchedTrades, match => {
+            var sale = _.find(sales, { id: match.saleId }),
+                saleQty = sale.qty,
+                saleDate = sale.date;
 
-            _.each(buyIds, id => {
-                var buy = _.find(holdings[sale.stock], { id: id });
-                var qty = _.min([saleQty, buy.balance]);
-                var buyBrokerage = getBrokerage(qty, buy.price, true);
-                gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, buyBrokerage.plus(sale.brokerage)));
+
+            _.each(match.buyIds, id => {
+                var buy = _.find(holdings[sale.stock], { id: id }),
+                    qty = _.min([saleQty, buy.balance]),
+                    brokerage,
+                    isShortTerm = false;
+
+                var days = saleDate.diff(buy.date, 'days');
+                if (days < 0) {
+                    throw new Error(util.format("Buy %d date %s is matched with Sale %d dated %s - SERIOUS ERROR! ",
+                        buy.id, buy.date.toISOString(), sale.id, sale.date.toISOString()));
+                }
+
+                isShortTerm = (days < 365);
+
+                brokerage = getBrokerage(qty, buy.price, true).plus( getBrokerage(qty, sale.price, false) );
+                gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, brokerage, isShortTerm));
                 buy.balance -= qty;
                 saleQty -= qty;
                 if (buy.balance === 0) {

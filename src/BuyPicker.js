@@ -9,7 +9,7 @@ function ascPriceComparer(left, right) { return left.price.comparedTo(right.pric
 module.exports = function (buys, sales) {
     var buysQueue = _.cloneDeep(buys);
     var salesQueue = _.cloneDeep(sales);
-    var matchedTrades = {};
+    var matchedTrades = [];
 
     function getBuysBefore(saleDate) {
         return _.filter(buysQueue, b => b.date.isBefore(saleDate) && b.balance > 0);
@@ -19,7 +19,7 @@ module.exports = function (buys, sales) {
             oneYearBeforeSale = moment(sale.date).subtract(1, 'year'),
             groups, longTermBuys, shortTermBuys,
             saleQty,
-            buy, looper = 0, qty;
+            buy, looper = 0, qty, match;
 
         groups = _.partition(buys, b => b.date.isSameOrBefore(oneYearBeforeSale));
         longTermBuys = groups[0].sort(ascPriceComparer);
@@ -37,8 +37,13 @@ module.exports = function (buys, sales) {
             saleQty -= qty;
             looper++;
 
-            matchedTrades[sale.id] = matchedTrades[sale.id] || [];
-            matchedTrades[sale.id].push(buy.id);
+            match = _.find(matchedTrades, { 'saleId': sale.id });
+            if (!match) {
+                matchedTrades.push({ 'saleId': sale.id, 'buyIds': [buy.id] });
+            }else{
+                match.buyIds.push(buy.id);
+            }
+
         }
         if (saleQty > 0) {
             throw new Error('Insufficient holdings!');
