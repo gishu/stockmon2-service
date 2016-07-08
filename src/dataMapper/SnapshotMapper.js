@@ -4,6 +4,7 @@ var _ = require('lodash');
 var moment = require('moment');
 
 var make = require('../Trade.js');
+var makeNew = require('../Snapshot.js');
 
 
 module.exports = function getSnapshotMapper(database) {
@@ -97,19 +98,15 @@ module.exports = function getSnapshotMapper(database) {
                             itemCallback(err, null);
 
                         } else {
-                            itemCallback(null, {
-                                year: year,
-                                holdings: results[0],
-                                gains: results[1],
-                                dividends: results[2]
-                            });
+                            itemCallback(null, makeNew.snapshot(year, results[1], results[2], results[0]));
                         }
                     }
                 );
 
             },
                 (err, results) => {
-                    callback(err, results);
+
+                    callback(err, makeNew.snapshots(results));
                 }
             );
         });
@@ -154,7 +151,7 @@ module.exports = function getSnapshotMapper(database) {
                 var insertStmt = db.prepare('insert into snapshot_gains(AccountId, Year, SrNo, Qty, BuyId, SaleId, Brokerage, Gain, IsShortTerm) values(?,?,?,?,?,?,?,?,?)');
 
                 async.forEachOf(gains, (gain, index, gainCallback) => {
-                    var values = [accountId, year, index, gain.qty, gain.buyId, gain.saleId, gain.brokerage.toString(), gain.gain.toString(), (gain.isShortTerm ? 1 : 0) ];
+                    var values = [accountId, year, index, gain.qty, gain.buyId, gain.saleId, gain.brokerage.toString(), gain.gain.toString(), (gain.isShortTerm ? 1 : 0)];
 
                     insertStmt.run(values, err => {
                         gainCallback(err);
@@ -202,9 +199,9 @@ module.exports = function getSnapshotMapper(database) {
                 async.each(snapshots, (snapshot, snapshotSavedCallback) => {
 
                     async.parallel([
-                        cb => _saveHoldings(accountId, snapshot.year, snapshot.holdings, cb),
-                        cb => _saveGains(accountId, snapshot.year, snapshot.gains, cb),
-                        cb => _saveDivvies(accountId, snapshot.year, snapshot.dividends, cb)
+                        cb => _saveHoldings(accountId, snapshot.year(), snapshot.holdings(), cb),
+                        cb => _saveGains(accountId, snapshot.year(), snapshot.gains(), cb),
+                        cb => _saveDivvies(accountId, snapshot.year(), snapshot.dividends(), cb)
                     ],
                         (err, results) => snapshotSavedCallback(err)
                     );

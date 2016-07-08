@@ -1,6 +1,6 @@
 var _ = require('lodash');
 var util = require('util');
-var BigNumber = require('BigNumber.js');
+var BigNumber = require('bignumber.js');
 var simulate = require('./Simulation.js');
 var log = require('debug')('account');
 
@@ -87,7 +87,7 @@ function create(name) {
                 log('Simulation failed with ' + err);
                 callback(err, null);
             }
-            var holdings = _.last(snapshots).holdings;
+            var holdings = _.last(snapshots).holdings();
 
             holdings = _(holdings).map((trades, stock) => {
                 var avg_qty = 0;

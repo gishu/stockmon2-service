@@ -66,15 +66,16 @@ describe('Account', function () {
                     expect(account.id()).toEqual(1);
                     expect(account.getName()).toEqual('Mushu');
 
-                    snapshot = _.find(snapshots, { 'year': 2008 });
-                    expect(snapshot.dividends.length).toEqual(4);
-                    gain = _.last(snapshot.dividends);
+                    snapshot = snapshots.forYear(2008);
+                    var divs = snapshot.dividends();
+                    expect(divs.length).toEqual(4);
+                    gain = _.last(divs);
                     expect(gain.stock).toEqual('SBI');
                     expect(gain.amount.toString()).toEqual('90');
 
-                    snapshot = _.find(snapshots, { 'year': 2009 })
-                    expect(snapshot.gains.length).toEqual(2);
-                    gain = _.last(snapshot.gains);
+                    snapshot = snapshots.forYear(2009);
+                    expect(snapshot.gains().length).toEqual(2);
+                    gain = _.last(snapshot.gains());
                     expect(gain.stock).toEqual('HDFCBANK');
                     expect(gain.gain.toString()).toEqual('5590.46');
 

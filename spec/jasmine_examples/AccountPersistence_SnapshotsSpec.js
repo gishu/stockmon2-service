@@ -89,15 +89,16 @@ describe('Account', function () {
         it('can persist gains', done => {
 
             snapshotMapper.loadSnapshots(savedAccountId, [2008, 2009], (err, snapshots) => {
-                var snapshot = _.find(snapshots, { year: 2008 });
-                expect(snapshot.gains.length).toBe(0);
+                var snapshot = snapshots.forYear(2008);
+                expect(snapshot.gains().length).toBe(0);
 
 
-                snapshot = _.find(snapshots, { year: 2009 });
-                expect(_.map(snapshot.gains, 'stock')).toEqual(['HDFC', 'HDFCBANK', 'SBI', 'ONGC', 'HDFC']);
-                expect(_.map(snapshot.gains, 'qty')).toEqual([4, 10, 5, 10, 11]);
+                snapshot = snapshots.forYear(2009);
+                var gains = _.sortBy(snapshot.gains(), 'saleId');
+                expect(_.map(gains, 'stock')).toEqual(['HDFC', 'HDFCBANK', 'SBI', 'ONGC', 'HDFC']);
+                expect(_.map(gains, 'qty')).toEqual([4, 10, 5, 10, 11]);
 
-                expect(_.map(snapshot.gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46', '5831.64', '4063.77', '10981.3']);
+                expect(_.map(gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46', '5831.64', '4063.77', '10981.3']);
                 done();
             })
 
@@ -116,13 +117,14 @@ describe('Account', function () {
 
         it('can persist dividends', done => {
             snapshotMapper.loadSnapshots(savedAccountId, [2008, 2009], (err, snapshots) => {
-                var snapshot = _.find(snapshots, { year: 2008 });
-                expect(snapshot.dividends[0].stock).toBe("SBI");
-                expect(snapshot.dividends[0].amount.toString()).toBe("123");
+                var snapshot = snapshots.forYear(2008);
+                var div = snapshot.dividends()[0];
+                expect(div.stock).toBe("SBI");
+                expect(div.amount.toString()).toBe("123");
 
 
-                snapshot = _.find(snapshots, { year: 2009 });
-                expect(snapshot.dividends.length).toBe(0);
+                snapshot = snapshots.forYear(2009);
+                expect(snapshot.dividends().length).toBe(0);
                 done();
             })
         })

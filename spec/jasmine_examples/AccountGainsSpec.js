@@ -31,29 +31,31 @@ describe('Account', function () {
             }
         ],
             (err, snapshots) => {
-                var snapshot;
+                var snapshot, gains;
                 expect(err).toBeNull();
 
                 // 2 snapshots by financial year
-                expect(_.map(snapshots, 'year')).toEqual([2008, 2009]);
+                expect(_.map(snapshots, _.method('year'))).toEqual([2008, 2009]);
 
                 // only dividends in 2008
-                snapshot = _.find(snapshots, { year: 2008 });
-                expect(_.map(snapshot.dividends, 'stock')).toEqual(['HDFCBANK', 'L&T FIN', 'SBI', 'SBI']);
-                expect(_.map(snapshot.dividends, d => d.amount.toString())).toEqual(['200', '70', '90', '90']);
+                snapshot = _.find(snapshots, s => s.year() === 2008);
+                var dividends = snapshot.dividends();
+                expect(_.map(dividends, 'stock')).toEqual(['HDFCBANK', 'L&T FIN', 'SBI', 'SBI']);
+                expect(_.map(dividends, d => d.amount.toString())).toEqual(['200', '70', '90', '90']);
 
-                expect(snapshot.gains.length).toEqual(0);
+                expect(snapshot.gains().length).toEqual(0);
 
                 // only sales in 2009
-                snapshot = _.find(snapshots, { year: 2009 });
-                expect(_.map(snapshot.gains, 'stock')).toEqual(['HDFC', 'HDFCBANK']);
-                expect(_.map(snapshot.gains, 'qty')).toEqual([4, 10]);
-                expect(_.map(snapshot.gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46']);
+                snapshot = _.find(snapshots, s => s.year() === 2009);
+                gains = snapshot.gains();
+                expect(_.map(gains, 'stock')).toEqual(['HDFC', 'HDFCBANK']);
+                expect(_.map(gains, 'qty')).toEqual([4, 10]);
+                expect(_.map(gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46']);
 
-                expect(snapshot.dividends.length).toEqual(0);
+                expect(snapshot.dividends().length).toEqual(0);
 
                 done();
-             }
+            }
         );
     });
 
@@ -72,14 +74,18 @@ describe('Account', function () {
             }
         ],
             (err, snapshots) => {
-                var snapshot = _.find(snapshots, { 'year': 2013 });
-                expect(snapshot.gains.length).toEqual(3);
-                expect(_.every(snapshot.gains, 'isShortTerm'));
+                var snapshot = _.find(snapshots, s => s.year() === 2013);
+                var gains = snapshot.gains();
 
-                snapshot = _.find(snapshots, { 'year': 2014 });
-                expect(snapshot.gains.length).toEqual(5);
+                expect(gains.length).toEqual(3);
+                expect(_.every(gains, 'isShortTerm'));
 
-                var sets = _.partition(snapshot.gains, g => g.isShortTerm);
+                snapshot = _.find(snapshots, s => s.year() === 2014);
+
+                gains = snapshot.gains();
+                expect(gains.length).toEqual(5);
+
+                var sets = _.partition(gains, g => g.isShortTerm);
                 expect(sets.length).toEqual(2);
 
                 var totalSTGain = _.reduce(sets[0], (result, g) => result.add(g.gain), new BigNumber(0));
@@ -99,5 +105,48 @@ describe('Account', function () {
 
     it('can optimize gains computation using the last saved closing stmt', done => {
         pending('save snapshots first!')
+    });
+
+    it('can report net profit/loss on an annual basis', done => {
+        async.waterfall([
+            (cb) => {
+                parse(helpers.getCsvStream('short_term_trades.csv'), (err, results) => cb(err, results));
+            },
+
+            (results, cb) => {
+                var inMemAccount = account.create('G');
+                inMemAccount.register(results.trades);
+                inMemAccount.addDividends(results.dividends);
+                inMemAccount.getAnnualStmts((err, snapshots) => cb(err, snapshots));
+            }
+        ],
+            (err, snapshots) => {
+                var snapshot = snapshots.shift();
+
+                expect(snapshot.year()).toBe(2012);
+                expect(snapshot.netGain().toString()).toBe('0');
+
+                snapshot = snapshots.shift();
+                expect(snapshot.year()).toBe(2013);
+                expect(snapshot.longTermGains().toString()).toBe('0');
+                expect(snapshot.shortTermGains().toString()).toBe('5648.25');
+                expect(snapshot.netGain().toString()).toBe('4801.0125'); //TODO : Fix decimal places
+
+                //console.log(_.join(_.map(snapshot.gains(), g => g.isShortTerm +'|' + g.gain.toString()), ' - ' ));
+
+                snapshot = snapshots.shift();
+                expect(snapshot.year()).toBe(2014);
+                console.log(_.join(_.map(snapshot.gains(), g => g.isShortTerm + '|' + g.gain.toString()), ' - '));
+                expect(snapshot.longTermGains().toString()).toBe('7284.79');
+                expect(snapshot.shortTermGains().toString()).toBe('-66.99');
+                expect(snapshot.netGain().toString()).toBe('7217.8');
+
+                snapshot = snapshots.shift();
+                expect(snapshot.year()).toBe(2015);
+                expect(snapshot.netGain().toString()).toBe('0');
+
+                done();
+            }
+        );
     });
 });

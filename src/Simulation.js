@@ -1,10 +1,12 @@
 var _ = require('lodash');
+var moment = require('moment');
+
 var match = require('./BuyPicker.js');
 var brokPath = './HdfcBrokerage.js';
 var getBrokerage = require(brokPath);
 var make = require('./Trade.js');
-var moment = require('moment');
-var util = require('util');
+var makeNew = require('./Snapshot.js');
+
 
 // simulation of trades to annual snapshots
 
@@ -42,7 +44,7 @@ function _filterByYear(datedEntries, finYearRange) {
 function _process(finYearRange, trades, dividends, opening_holdings) {
     var gains = [],
         divs = [],
-        holdings = _.cloneDeep(opening_holdings),
+        holdings = _.cloneDeep(opening_holdings), // we are going to mutate this one
         mapSales = {},
         divEntry;
 
@@ -95,13 +97,8 @@ function _process(finYearRange, trades, dividends, opening_holdings) {
         });
     });
 
-
-    return {
-        year: finYearRange[0].year(),
-        gains: _.sortBy(gains, ['date', 'stock']),
-        dividends: dividends,
-        holdings: holdings
-    };
+    return makeNew.snapshot(finYearRange[0].year(), gains, dividends, holdings);
+   
 }
 
 module.exports = function (openingHoldings, tradeStream, dividendStream, callback) {
@@ -121,9 +118,10 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
             finYearRange = [finYearRange[0].add({ 'years': 1 }), finYearRange[1].add({ 'years': 1 })];
             tradesInFinYear = _filterByYear(tradeStream, finYearRange);
             divviesInFinYear = _filterByYear(dividendStream, finYearRange);
-            holdings = curSnapShot.holdings;
+            holdings = curSnapShot.holdings();
         }
-        callback(null, snapshots);
+
+        callback(null, makeNew.snapshots(snapshots));
     } catch (err) {
         callback(err, null);
     }

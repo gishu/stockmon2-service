@@ -9,7 +9,7 @@ module.exports = function () {
     var _dbPromise = getDatabasePromise();
 
     function getDatabasePromise() {
-        var __DB_NAME = './stockmon.sqlite';
+        var __DB_NAME = ':memory:'; //'./stockmon.sqlite';
 
         return new Promise((resolve, reject) => {
             async.waterfall([

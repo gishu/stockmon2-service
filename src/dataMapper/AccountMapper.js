@@ -27,12 +27,12 @@ function getAccountMapper(database) {
                 (snapshot, cb) => {
                     if (snapshot) {
                         // If last saved fin year is 2009, we want to exclude trades older than 1-Apr-2010
-                        detailArgs.push(moment([snapshot.year + 1, 3, 1]).toISOString());
+                        detailArgs.push(moment([snapshot.year() + 1, 3, 1]).toISOString());
                         var dateClause = ' AND date(Date) > ?';
                         buySql += dateClause;
                         saleSql += dateClause;
                         divSql += dateClause;
-                        optimizeHoldings = snapshot.holdings;
+                        optimizeHoldings = snapshot.holdings();
                     }
                     cb(null);
                 },
