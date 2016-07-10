@@ -17,7 +17,8 @@ function makeSnapshot(year, gains, dividends, holdings) {
         if (shortTermGains.greaterThan(ZERO)) {
             shortTermGains = shortTermGains.mul(new BigNumber(0.85));
         }
-        return this.longTermGains().plus(shortTermGains);
+        var byWayOfDivs = _.reduce(_divs, (sum, d) => sum.plus(d.amount), ZERO);
+        return this.longTermGains().plus(shortTermGains).plus(byWayOfDivs);
     }
 
     return {

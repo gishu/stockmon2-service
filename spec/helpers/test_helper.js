@@ -11,11 +11,14 @@ function createStringStream(str) {
     return s;
 }
 
-function deleteDb() {
+function deleteDb(path) {
     var log = require('debug')('db');
+    
+    if (path === ':memory:'){ return; }
+    
     try {
-        fs.accessSync('./stockmon.sqlite', fs.F_OK);
-        fs.unlinkSync('./stockmon.sqlite');
+        fs.accessSync(path, fs.F_OK);
+        fs.unlinkSync(path);
     }
     catch (e) {
         if (!(e.code === 'ENOENT')) {
@@ -27,7 +30,7 @@ function deleteDb() {
 }
 
 function getTradesCsvReadStream(fileName) {
-    var csv_path = path.resolve(__dirname, '..','jasmine_examples', 'datafiles', fileName);
+    var csv_path = path.resolve(__dirname, '..', 'datafiles', fileName);
     return fs.createReadStream(csv_path);
 
 }

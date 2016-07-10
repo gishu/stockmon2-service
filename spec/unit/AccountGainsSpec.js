@@ -11,13 +11,7 @@ var BigNumber = require('bignumber.js');
 var helpers = require('../helpers/test_helper.js');
 
 describe('Account', function () {
-    var istream, acc;
-    beforeEach(() => {
-        helpers.deleteDb();
-
-
-    });
-
+   
     it('can compute long term gains', function (done) {
         async.waterfall([
             (cb) => {
@@ -124,7 +118,7 @@ describe('Account', function () {
                 var snapshot = snapshots.shift();
 
                 expect(snapshot.year()).toBe(2012);
-                expect(snapshot.netGain().toString()).toBe('0');
+                expect(snapshot.netGain().toString()).toBe('100'); // just dividends
 
                 snapshot = snapshots.shift();
                 expect(snapshot.year()).toBe(2013);
@@ -136,7 +130,6 @@ describe('Account', function () {
 
                 snapshot = snapshots.shift();
                 expect(snapshot.year()).toBe(2014);
-                console.log(_.join(_.map(snapshot.gains(), g => g.isShortTerm + '|' + g.gain.toString()), ' - '));
                 expect(snapshot.longTermGains().toString()).toBe('7284.79');
                 expect(snapshot.shortTermGains().toString()).toBe('-66.99');
                 expect(snapshot.netGain().toString()).toBe('7217.8');

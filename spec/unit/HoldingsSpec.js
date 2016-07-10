@@ -11,9 +11,7 @@ var helpers = require('../helpers/test_helper.js');
 
 
 describe('Account', function () {
-    beforeEach(() => {
-        helpers.deleteDb();
-    });
+    
     it('correctly handles sale split across multiple buys', function (done) {
 
         async.waterfall([

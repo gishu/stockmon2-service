@@ -28,10 +28,10 @@ function parse(csvStream, callback) {
                         price = new BigNumber(record['UnitPrice'].replace(',', ''));
                         qty = parseInt(record['Qty']);
                         if (record['Type'] != 'SOLD') {
-                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, true)));
+                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, true), record['Notes']));
                         }
                         else {
-                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, false)));
+                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, false), record['Notes']));
                         }
                     }
                 }

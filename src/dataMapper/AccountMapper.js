@@ -5,12 +5,16 @@ var moment = require('moment');
 var _ = require('lodash');
 var make = require('../Trade.js');
 
+var log = require('debug')('accMapper');
+
 var getSnapshotMapper = require('./SnapshotMapper.js');
 
 function getAccountMapper(database) {
     var snapshotMapper = getSnapshotMapper(database);
 
     function _load(id, loadCallback) {
+        log('Loading account...');
+        
         database.execute(db => {
             var optimizedArgs, optimizeHoldings,
                 buySql = 'select * from Buys where AccountId = ?',
@@ -102,6 +106,7 @@ function getAccountMapper(database) {
                 }
             ],
                 (err, result) => {
+                    log('Load account done!');
                     loadCallback(err, result);
                 }
             );  // end async waterfall
@@ -110,24 +115,26 @@ function getAccountMapper(database) {
 
 
     function _save(a, saveCallback) {
+        log('Saving account...');
         var accountId = 0;
         try {
             database.executeSerial(db => {
                 var state = a.__state,
                     insertBuyStmt, insertSaleStmt, insertDivStmt;
+                db.run('BEGIN TRANSACTION');
                 db.run('insert into Accounts(Name) values(?)', [state.name], function (err) {
                     if (err) { throw err; }
 
                     accountId = this.lastID;
 
-                    insertBuyStmt = db.prepare('insert into buys(AccountId, Date, Stock, Qty, Price, Brokerage) values(?,?,?,?,?,?)');
-                    insertSaleStmt = db.prepare('insert into sales(AccountId, Date, Stock, Qty, Price, Brokerage) values(?,?,?,?,?,?)');
+                    insertBuyStmt = db.prepare('insert into buys(AccountId, Date, Stock, Qty, Price, Brokerage, Notes) values(?,?,?,?,?,?,?)');
+                    insertSaleStmt = db.prepare('insert into sales(AccountId, Date, Stock, Qty, Price, Brokerage, Notes) values(?,?,?,?,?,?,?)');
                     insertDivStmt = db.prepare('insert into dividends(AccountId, Date, Stock, Amount, Notes) values(?,?,?,?,?)');
 
                     async.parallel([
                         (callback) => {
                             async.each(state.trades, (t, cb) => {
-                                var x = [accountId, t.date.toISOString(), t.stock, t.qty, t.price.toString(), t.brokerage.toString()],
+                                var x = [accountId, t.date.toISOString(), t.stock, t.qty, t.price.toString(), t.brokerage.toString(), t.notes],
                                     stmt = (t.is_buy ? insertBuyStmt : insertSaleStmt);
 
                                 stmt.run(x, function (err) {
@@ -144,7 +151,7 @@ function getAccountMapper(database) {
                         },
                         (callback) => {
                             async.each(state.dividends, (d, cb) => {
-                                var x = [accountId, d.date.toISOString(), d.stock, d.amount.toString(), d.desc];
+                                var x = [accountId, d.date.toISOString(), d.stock, d.amount.toString(), d.notes];
 
                                 insertDivStmt.run(x, function (err) {
                                     if (err) { cb(err); return; }
@@ -159,9 +166,11 @@ function getAccountMapper(database) {
                         }
                     ],
                         (err) => {
+                            db.run((err ? 'ROLLBACK TRANSACTION' : 'COMMIT TRANSACTION'));
                             if (err) {
                                 saveCallback(err, null);
                             } else {
+                                log('Save Acc Commit');
                                 _load(accountId, (err, acc) => { saveCallback(err, acc); });
                             }
                         });

@@ -5,7 +5,7 @@ var moment = require('moment');
 
 var make = require('../Trade.js');
 var makeNew = require('../Snapshot.js');
-
+var log = require('debug')('snapMapper');
 
 module.exports = function getSnapshotMapper(database) {
     function _getLatestSnapshot(accountId, callback) {
@@ -192,9 +192,10 @@ module.exports = function getSnapshotMapper(database) {
         });
     }
     function _saveSnapshots(accountId, snapshots, saveCallback) {
+        log('Saving snapshot...');
         try {
             database.execute(db => {
-
+                db.run('BEGIN TRANSACTION');
                 // ordered keys
                 async.each(snapshots, (snapshot, snapshotSavedCallback) => {
 
@@ -207,6 +208,8 @@ module.exports = function getSnapshotMapper(database) {
                     );
                 },
                     (err) => {
+                        db.run((err ? 'ROLLBACK TRANSACTION' : 'COMMIT TRANSACTION'));
+                        log('Done');
                         saveCallback(err);
                     }     // all snapshots done
                 ); // each snapshot/year

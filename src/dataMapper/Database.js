@@ -8,9 +8,9 @@ module.exports = function () {
 
     var _dbPromise = getDatabasePromise();
 
-    function getDatabasePromise() {
-        var __DB_NAME = ':memory:'; //'./stockmon.sqlite';
-
+    function getDatabasePromise(pathToDatabase) {
+        var __DB_NAME = pathToDatabase || ':memory:'; // './stockmon.sqlite';
+        
         return new Promise((resolve, reject) => {
             async.waterfall([
                 callback => {
@@ -86,7 +86,7 @@ module.exports = function () {
     }
     function parallelWrapper(action) {
         _dbPromise.then(db => {
-            db.serialize(() => action(db));
+            db.parallelize(() => action(db));
         });
     }
 
@@ -98,6 +98,7 @@ module.exports = function () {
     return {
         execute: parallelWrapper,
         executeSerial: serialWrapper,
-        close: close
+        close: close,
+        getPath: () => ___DB_NAME
     };
 }
