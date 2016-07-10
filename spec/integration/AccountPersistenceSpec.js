@@ -17,7 +17,7 @@ describe('Account', function () {
     var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-        helpers.deleteDb();
+        //helpers.deleteDb();
 
         database = getDatabase();
         mapper = getAccountMapper(database);

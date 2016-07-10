@@ -4,11 +4,11 @@ var async = require('async');
 var sqlite = require('sqlite3').verbose();
 var log = require('debug')('db')
 
-module.exports = function () {
+module.exports = function (pathToDatabase) {
 
     var _dbPromise = getDatabasePromise();
 
-    function getDatabasePromise(pathToDatabase) {
+    function getDatabasePromise() {
         var __DB_NAME = pathToDatabase || ':memory:'; // './stockmon.sqlite';
         
         return new Promise((resolve, reject) => {
