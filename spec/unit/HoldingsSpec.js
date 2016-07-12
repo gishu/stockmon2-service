@@ -29,7 +29,7 @@ describe('Account', function () {
             (err, holdings) => {
                 expect(holdings.length).toEqual(1);
                 expect(holdings[0].qty).toEqual(15);
-                expect(holdings[0].avg_price.toString()).toEqual('600');
+                expect(holdings[0].avg_price.toString()).toEqual('717');
                 done();
             }
         );

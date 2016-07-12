@@ -88,5 +88,39 @@ describe('Account', function () {
     it('ERR - cannot persist annual stmts until all trades and dividends are saved');
     it('Split buy into multiple sales - brokerage split')
 
+    it('can be updated with more trades periodically', (done) => {
+        async.waterfall([
+            cb => {
+                parse(helpers.getCsvStream('split_trades.csv'), (err, results) => cb(err, results));
+            },
+            (results, cb) => {
+                var acc = account.create('G');
+                acc.register(results.trades);
+                acc.addDividends(results.dividends);
+                mapper.save(acc, (err, account) => {
+                    cb(null, account);
+                });
+            },
+            (acc, cb) => {
+                var trades = [make.makeBuy('2014-05-14', 'TATA MOTORS', 20, '570', '123.45', 'NEW'),
+                    make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', 'NEW')];
+                var divs = [make.makeDividend('2014-05-14', 'TATA MOTORS', '250', 'NEW')];
+                acc.register(trades);
+                acc.addDividends(divs);
+                mapper.save(acc, (err, account) => {
+                    cb(null, account);
+                });
+            },
+            (acc, cb) => acc.getHoldings((err, holdings) => cb(err, holdings))
+
+        ],
+            (err, holdings) => {
+                expect(holdings.length).toEqual(1);
+                expect(holdings[0].qty).toEqual(40);
+                expect(holdings[0].avg_price.toString()).toEqual('610.13');
+                done();
+            }
+        );
+    });
 
 });

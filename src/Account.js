@@ -120,7 +120,7 @@ function create(name) {
         getName: getName,
         getAnnualStmts: getAnnualStmts,
         addDividends: addDividends,
-        __state: { name: _name, trades: _trades, dividends: _dividends }
+        __state: { id: _id, name: _name, trades: _trades, dividends: _dividends }
     };
 }
 

@@ -14,7 +14,7 @@ function getAccountMapper(database) {
 
     function _load(id, loadCallback) {
         log('Loading account...');
-        
+
         database.execute(db => {
             var optimizedArgs, optimizeHoldings,
                 buySql = 'select * from Buys where AccountId = ?',
@@ -121,65 +121,88 @@ function getAccountMapper(database) {
             database.executeSerial(db => {
                 var state = a.__state,
                     insertBuyStmt, insertSaleStmt, insertDivStmt;
+
                 db.run('BEGIN TRANSACTION');
-                db.run('insert into Accounts(Name) values(?)', [state.name], function (err) {
-                    if (err) { throw err; }
+                insertBuyStmt = db.prepare('insert into buys(AccountId, Date, Stock, Qty, Price, Brokerage, Notes) values(?,?,?,?,?,?,?)');
+                insertSaleStmt = db.prepare('insert into sales(AccountId, Date, Stock, Qty, Price, Brokerage, Notes) values(?,?,?,?,?,?,?)');
+                insertDivStmt = db.prepare('insert into dividends(AccountId, Date, Stock, Amount, Notes) values(?,?,?,?,?)');
 
-                    accountId = this.lastID;
-
-                    insertBuyStmt = db.prepare('insert into buys(AccountId, Date, Stock, Qty, Price, Brokerage, Notes) values(?,?,?,?,?,?,?)');
-                    insertSaleStmt = db.prepare('insert into sales(AccountId, Date, Stock, Qty, Price, Brokerage, Notes) values(?,?,?,?,?,?,?)');
-                    insertDivStmt = db.prepare('insert into dividends(AccountId, Date, Stock, Amount, Notes) values(?,?,?,?,?)');
-
-                    async.parallel([
-                        (callback) => {
-                            async.each(state.trades, (t, cb) => {
-                                var x = [accountId, t.date.toISOString(), t.stock, t.qty, t.price.toString(), t.brokerage.toString(), t.notes],
-                                    stmt = (t.is_buy ? insertBuyStmt : insertSaleStmt);
-
-                                stmt.run(x, function (err) {
-                                    cb(err);
-                                });
-                            },
-                                function (err) {
-                                    if (err) { callback(err, null); return; }
-
-                                    insertBuyStmt.finalize();
-                                    insertSaleStmt.finalize();
-                                    callback(null, null);
-                                });
-                        },
-                        (callback) => {
-                            async.each(state.dividends, (d, cb) => {
-                                var x = [accountId, d.date.toISOString(), d.stock, d.amount.toString(), d.notes];
-
-                                insertDivStmt.run(x, function (err) {
-                                    if (err) { cb(err); return; }
-                                    cb(null);
-                                });
-                            },
-                                err => {
-                                    if (err) { callback(err, null); return; }
-                                    insertDivStmt.finalize();
-                                    callback(null, null);
-                                })
+                async.waterfall([
+                    (cb) => {
+                        var accountId = state.id;
+                        if (accountId < 0) {
+                            db.run('insert into Accounts(Name) values(?)', [state.name], function (err) {
+                                cb(err, this.lastID);
+                            });
+                        } else {
+                            cb(null, accountId);
                         }
-                    ],
-                        (err) => {
-                            db.run((err ? 'ROLLBACK TRANSACTION' : 'COMMIT TRANSACTION'));
-                            if (err) {
-                                saveCallback(err, null);
-                            } else {
-                                log('Save Acc Commit');
-                                _load(accountId, (err, acc) => { saveCallback(err, acc); });
-                            }
-                        });
-                });
+                    },
+                    (accountId, saveDetailCallback) => {
+
+                        async.parallel([
+                            (callback) => _saveTrades(accountId, state.trades, insertBuyStmt, insertSaleStmt, callback),
+                            (callback) => _saveDividends(accountId, state.dividends, insertDivStmt, callback)
+                        ],
+                            (err) => saveDetailCallback(err, accountId)
+                        );
+                    }
+                ],
+                    (err, accountId) => {
+                        db.run((err ? 'ROLLBACK TRANSACTION' : 'COMMIT TRANSACTION'));
+                        if (err) {
+                            saveCallback(err, null);
+                        } else {
+                            log('Save Acc Commit');
+                            _load(accountId, (err, acc) => { saveCallback(err, acc); });
+                        }
+                    }
+                );
+
             });
         } catch (err) {
             saveCallback(new Error(err), null);
         }
     }
+
+    function _saveTrades(accountId, trades, insertBuyStmt, insertSaleStmt, callback) {
+        var newTrades = _.filter(trades, t => t.id < 0);
+        async.each(newTrades, (t, cb) => {
+            var x = [accountId, t.date.toISOString(), t.stock, t.qty, t.price.toString(), t.brokerage.toString(), t.notes],
+                stmt = (t.is_buy ? insertBuyStmt : insertSaleStmt);
+
+            stmt.run(x, function (err) {
+                cb(err);
+            });
+        },
+            function (err) {
+                if (err) { callback(err, null); return; }
+
+                insertBuyStmt.finalize();
+                insertSaleStmt.finalize();
+                callback(null, null);
+            });
+    };
+
+    function _saveDividends(accountId, dividends, insertDivStmt, callback) {
+        var newDivs = _.filter(dividends, t => t.id < 0);
+        async.each(newDivs, (d, cb) => {
+            var x = [accountId, d.date.toISOString(), d.stock, d.amount.toString(), d.notes];
+
+            insertDivStmt.run(x, function (err) {
+                if (err) { cb(err); return; }
+                cb(null);
+            });
+        },
+            err => {
+                if (err) { callback(err, null); return; }
+                insertDivStmt.finalize();
+                callback(null, null);
+            })
+    }
+
+
+
 
     return {
         load: _load,

@@ -52,12 +52,11 @@ function _process(finYearRange, trades, dividends, opening_holdings) {
         var sale, buy;
         holdings[t.stock] = holdings[t.stock] || [];
         if (t.is_buy) {
-            buy = Object.create(t);
-            buy.balance = t.qty;
-            holdings[t.stock].push(buy);
+            buy = t;
+            holdings[buy.stock].push(buy);
         }
         else {
-            sale = Object.create(t);
+            sale = t;
             mapSales[sale.stock] = mapSales[sale.stock] || [];
             mapSales[sale.stock].push(sale);
         }
@@ -108,13 +107,17 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
             finYearRange = _getFinYearRange(tradeStream[0], dividendStream[0]),
             tradesInFinYear = _filterByYear(tradeStream, finYearRange),
             divviesInFinYear = _filterByYear(dividendStream, finYearRange),
+            totalItems = tradeStream.length + dividendStream.length,
+            itemsProcessed = 0,
             curSnapShot;
 
-        while (tradesInFinYear.length > 0 || divviesInFinYear.length > 0) {
+        
+        while(itemsProcessed < totalItems){
             curSnapShot = _process(finYearRange, tradesInFinYear, divviesInFinYear, holdings);
             snapshots.push(curSnapShot);
 
             // incr finYear, turn closing stmt of prev year (holdings) into opening for next
+            itemsProcessed += (tradesInFinYear.length + divviesInFinYear.length);
             finYearRange = [finYearRange[0].add({ 'years': 1 }), finYearRange[1].add({ 'years': 1 })];
             tradesInFinYear = _filterByYear(tradeStream, finYearRange);
             divviesInFinYear = _filterByYear(dividendStream, finYearRange);
