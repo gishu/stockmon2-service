@@ -32,7 +32,7 @@ describe('TradeMatcher', () => {
     });
 
 
-    it('picks long term buys over short term to avoid tax', () => {
+    it('picks long term gains over short term to avoid tax', () => {
         var buys = getBuys([
             ['2008-04-01', 20, '200'],
             ['2008-12-01', 15, '180']
@@ -96,24 +96,39 @@ describe('TradeMatcher', () => {
                 { saleId: 13, buyIds: [3, 4] },
                 { saleId: 12, buyIds: [4] }
             ]);
-});
-
-// factory method to create trades given [date, qty, price] 
-function getBuys(rows) {
-    return _.map(rows, r => {
-        var buy = make.makeBuy.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
-        buy.balance = buy.qty;
-        buy.id = id++;
-        return buy;
     });
-}
-function getSales(rows) {
-    return _.map(rows, r => {
-        var sale = make.makeSale.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
 
-        sale.id = id++;
-        return sale;
+    it('picks short term losses if biased with third parameter to counter ST profits', () => {
+        var buys = getBuys([
+            ['2008-04-01', 20, '133'],
+            ['2009-04-01', 20, '123']
+        ]);
+        var sales = getSales([
+            ['2010-01-01', 20, '56'],
+        ]);
+
+        expect(matcher(buys, sales)).toEqual([
+            { saleId: 3, buyIds: [2] }
+        ]);
+
     });
-}
+
+    // factory method to create trades given [date, qty, price] 
+    function getBuys(rows) {
+        return _.map(rows, r => {
+            var buy = make.makeBuy.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
+            buy.balance = buy.qty;
+            buy.id = id++;
+            return buy;
+        });
+    }
+    function getSales(rows) {
+        return _.map(rows, r => {
+            var sale = make.makeSale.call(null, r[0], 'SOME STOCK', r[1], r[2], '0');
+
+            sale.id = id++;
+            return sale;
+        });
+    }
 
 });

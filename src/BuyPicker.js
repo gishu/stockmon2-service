@@ -14,18 +14,35 @@ module.exports = function (buys, sales) {
     function getBuysBefore(saleDate) {
         return _.filter(buysQueue, b => b.date.isBefore(saleDate) && b.balance > 0);
     }
+    function sortWithSecretSauce(buys, sale) {
+        // all temp vars
+        var bins, longTermBuys, shortTermBuys,
+            longTermLosses, longTermGains, shortTermLosses, shortTermGains,
+            oneYearBeforeSale = moment(sale.date).subtract(1, 'year');
+
+        bins = _.partition(buys, b => b.date.isSameOrBefore(oneYearBeforeSale));
+
+        longTermBuys = bins[0].sort(ascPriceComparer); // max LT Gain / min LT Loss as case may be
+        shortTermBuys = bins[1];
+
+        bins = _.partition(longTermBuys, b => b.price.greaterThan(sale.price));
+        longTermGains = bins[1];
+        longTermLosses = bins[0];
+
+        bins = _.partition(shortTermBuys, b => b.price.greaterThan(sale.price));
+        shortTermGains = bins[1].sort(descPriceComparer); // min ST Gains to reduce tax
+        shortTermLosses = bins[0].sort(ascPriceComparer); // min ST Loss to reduce loss
+
+        // preferred order
+        return _.concat(longTermGains, shortTermLosses, shortTermGains, longTermLosses);
+
+    }
     function matchSale(sale) {
         var buys = getBuysBefore(sale.date),
-            oneYearBeforeSale = moment(sale.date).subtract(1, 'year'),
-            groups, longTermBuys, shortTermBuys,
             saleQty,
             buy, looper = 0, qty, match;
 
-        groups = _.partition(buys, b => b.date.isSameOrBefore(oneYearBeforeSale));
-        longTermBuys = groups[0].sort(ascPriceComparer);
-        shortTermBuys = groups[1].sort(descPriceComparer);
-
-        buys = _.concat(longTermBuys, shortTermBuys);
+        buys = sortWithSecretSauce(buys, sale);
 
         saleQty = sale.qty;
 
@@ -40,7 +57,7 @@ module.exports = function (buys, sales) {
             match = _.find(matchedTrades, { 'saleId': sale.id });
             if (!match) {
                 matchedTrades.push({ 'saleId': sale.id, 'buyIds': [buy.id] });
-            }else{
+            } else {
                 match.buyIds.push(buy.id);
             }
 
