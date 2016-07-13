@@ -23,50 +23,54 @@ module.exports = function (pathToDatabase) {
                     var db = new sqlite.Database(__DB_NAME);
                     var path = require('path');
 
-                    if (!db_exists) {
-                        log('Creating DB at' + path.resolve(__DB_NAME));
-                        db.serialize(() => {
-                            async.series([
-                                cb => {
-                                    db.run('create table Accounts (Id INTEGER PRIMARY KEY, Name TEXT);', [], err => cb(err));
-                                },
-                                cb => {
-                                    db.run('create table Buys(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT,' +
-                                        ' FOREIGN KEY(AccountId) REFERENCES Account(Id));', [], err => cb(err));
-                                },
-                                cb => {
-                                    db.run('create table Sales(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT,' +
-                                        ' FOREIGN KEY(AccountId) REFERENCES Account(Id));', [], err => cb(err));
-                                },
-                                cb => {
-                                    db.run('create table Dividends(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Amount TEXT, Notes TEXT,' +
-                                        ' FOREIGN KEY(AccountId) REFERENCES Account(Id));', [], err => cb(err));
-                                },
-                                cb => {
-                                    db.run('create table Snapshot_Holdings(AccountId INTEGER, Year INTEGER, BuyId INTEGER, Balance INTEGER,' +
-                                        ' PRIMARY KEY(AccountId, Year, BuyId), FOREIGN KEY(BuyId) REFERENCES Buys(Id),' +
-                                        ' FOREIGN KEY(AccountId) REFERENCES Accounts(Id) )', [], err => cb(err));
-                                },
-                                cb => {
-                                    db.run('CREATE TABLE Snapshot_Gains(AccountId INTEGER, Year INTEGER, SrNo INTEGER, Qty INTEGER, BuyId INTEGER, SaleId INTEGER, Brokerage TEXT, Gain TEXT, IsShortTerm INTEGER,' +
-                                        ' PRIMARY KEY(AccountId, Year, SrNo),' +
-                                        ' FOREIGN KEY(BuyId) REFERENCES Buys(Id),' +
-                                        ' FOREIGN KEY(SaleId) REFERENCES Sales(Id),' +
-                                        ' FOREIGN KEY(AccountId) REFERENCES Accounts(Id) )', [], err => cb(err));
-                                },
-                                cb => {
-                                    db.run('CREATE TABLE Snapshot_Divs(AccountId INTEGER, Year INTEGER, DivId INTEGER,' +
-                                        ' PRIMARY KEY(AccountId, Year, DivId),' +
-                                        ' FOREIGN KEY(DivId) REFERENCES Dividends(Id))', [], err => cb(err));
-                                },
-                            ],
-                                (err, results) => {
-                                    log('Done ' + (err ? 'with' : 'without') + ' errors');
-                                    callback(err, db);
-                                }
-                            );
-                        });
+                    if (db_exists) {
+                        callback(null, db);
+                        return;
                     }
+
+                    log('Creating DB at' + path.resolve(__DB_NAME));
+                    db.serialize(() => {
+                        async.series([
+                            cb => {
+                                db.run('create table Accounts (Id INTEGER PRIMARY KEY, Name TEXT);', [], err => cb(err));
+                            },
+                            cb => {
+                                db.run('create table Buys(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT,' +
+                                    ' FOREIGN KEY(AccountId) REFERENCES Account(Id));', [], err => cb(err));
+                            },
+                            cb => {
+                                db.run('create table Sales(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT,' +
+                                    ' FOREIGN KEY(AccountId) REFERENCES Account(Id));', [], err => cb(err));
+                            },
+                            cb => {
+                                db.run('create table Dividends(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Amount TEXT, Notes TEXT,' +
+                                    ' FOREIGN KEY(AccountId) REFERENCES Account(Id));', [], err => cb(err));
+                            },
+                            cb => {
+                                db.run('create table Snapshot_Holdings(AccountId INTEGER, Year INTEGER, BuyId INTEGER, Balance INTEGER,' +
+                                    ' PRIMARY KEY(AccountId, Year, BuyId), FOREIGN KEY(BuyId) REFERENCES Buys(Id),' +
+                                    ' FOREIGN KEY(AccountId) REFERENCES Accounts(Id) )', [], err => cb(err));
+                            },
+                            cb => {
+                                db.run('CREATE TABLE Snapshot_Gains(AccountId INTEGER, Year INTEGER, SrNo INTEGER, Qty INTEGER, BuyId INTEGER, SaleId INTEGER, Brokerage TEXT, Gain TEXT, IsShortTerm INTEGER,' +
+                                    ' PRIMARY KEY(AccountId, Year, SrNo),' +
+                                    ' FOREIGN KEY(BuyId) REFERENCES Buys(Id),' +
+                                    ' FOREIGN KEY(SaleId) REFERENCES Sales(Id),' +
+                                    ' FOREIGN KEY(AccountId) REFERENCES Accounts(Id) )', [], err => cb(err));
+                            },
+                            cb => {
+                                db.run('CREATE TABLE Snapshot_Divs(AccountId INTEGER, Year INTEGER, DivId INTEGER,' +
+                                    ' PRIMARY KEY(AccountId, Year, DivId),' +
+                                    ' FOREIGN KEY(DivId) REFERENCES Dividends(Id))', [], err => cb(err));
+                            },
+                        ],
+                            (err, results) => {
+                                log('Done ' + (err ? 'with' : 'without') + ' errors');
+                                callback(err, db);
+                            }
+                        );
+                    });
+                    
                 }
             ],
                 function (err, db) {
