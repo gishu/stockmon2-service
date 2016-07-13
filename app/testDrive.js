@@ -15,7 +15,7 @@ var log = require('debug')('app')
 var dbPath = './stockmon2.sqlite';
 try {
     fs.accessSync(dbPath, fs.F_OK);
-    //fs.unlinkSync(dbPath);
+    fs.unlinkSync(dbPath);
 }
 catch (e) {
     if (!(e.code === 'ENOENT')) {
