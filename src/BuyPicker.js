@@ -1,5 +1,6 @@
 var _ = require('lodash'),
-    moment = require('moment');
+    moment = require('moment'),
+    util = require('util');
 
 function descPriceComparer(left, right) { return right.price.comparedTo(left.price); }
 function ascPriceComparer(left, right) { return left.price.comparedTo(right.price); }
@@ -63,7 +64,7 @@ module.exports = function (buys, sales) {
 
         }
         if (saleQty > 0) {
-            throw new Error('Insufficient holdings!');
+            throw new Error(util.format('Insufficient holdings to sell %d of %s!', sale.qty, sale.stock));
         }
     }
 
@@ -82,6 +83,7 @@ module.exports = function (buys, sales) {
     }
 
     function matchTrades() {
+
         while (salesQueue.length > 0) {
             var chunk = getSplice();
             chunk.sort(descPriceComparer);
@@ -89,6 +91,7 @@ module.exports = function (buys, sales) {
                 matchSale(sale, true);
             })
         }
+
         return matchedTrades;
     }
     return matchTrades();

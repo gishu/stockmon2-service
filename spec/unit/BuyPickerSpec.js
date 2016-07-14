@@ -28,7 +28,7 @@ describe('TradeMatcher', () => {
             ['2010-01-02', 10, '100']
         ]),
             sales = getSales([['2010-10-01', 30, '250']]);
-        expect(() => matcher(buys, sales)).toThrowError("Insufficient holdings!");
+        expect(() => matcher(buys, sales)).toThrowError("Insufficient holdings to sell 30 of SOME STOCK!");
     });
 
 

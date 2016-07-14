@@ -26,15 +26,21 @@ describe('Account', function () {
         var expected_holdings = [{ stock: 'HDFC', qty: 80, avg_price: new BigNumber('1266.23') },
             { stock: 'HDFCBANK', qty: 5, avg_price: new BigNumber('1030') }];
         a.register(trades);
+
         a.getHoldings((err, holdings) => {
-            expect(err).toBeNull();
-            expect(holdings).toJSONEqual(expected_holdings);
-            done();
+            // BUGCheck: to ensure simulation doesn't modify actual trades + uses cloned trades to manipulate balances
+            a.getHoldings((err, holdings) => {
+                expect(err).toBeNull();
+                expect(holdings).toJSONEqual(expected_holdings);
+                done();
+            });
+
         });
+
 
     });
 
-   
+
     it('should not report holdings if balance qty is zero');
 
     it('throws in case of insufficient balance for a sale', function () {

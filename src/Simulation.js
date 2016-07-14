@@ -104,14 +104,14 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
     try {
         var holdings = _.cloneDeep(openingHoldings),
             snapshots = [],
-            finYearRange = _getFinYearRange(tradeStream[0], dividendStream[0]),
-            tradesInFinYear = _filterByYear(tradeStream, finYearRange),
+            trades = _.cloneDeep(tradeStream),
+            finYearRange = _getFinYearRange(trades[0], dividendStream[0]),
+            tradesInFinYear = _filterByYear(trades, finYearRange),
             divviesInFinYear = _filterByYear(dividendStream, finYearRange),
-            totalItems = tradeStream.length + dividendStream.length,
+            totalItems = trades.length + dividendStream.length,
             itemsProcessed = 0,
             curSnapShot;
-
-        
+         
         while(itemsProcessed < totalItems){
             curSnapShot = _process(finYearRange, tradesInFinYear, divviesInFinYear, holdings);
             snapshots.push(curSnapShot);
@@ -119,7 +119,7 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
             // incr finYear, turn closing stmt of prev year (holdings) into opening for next
             itemsProcessed += (tradesInFinYear.length + divviesInFinYear.length);
             finYearRange = [finYearRange[0].add({ 'years': 1 }), finYearRange[1].add({ 'years': 1 })];
-            tradesInFinYear = _filterByYear(tradeStream, finYearRange);
+            tradesInFinYear = _filterByYear(trades, finYearRange);
             divviesInFinYear = _filterByYear(dividendStream, finYearRange);
             holdings = curSnapShot.holdings();
         }

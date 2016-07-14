@@ -1,5 +1,5 @@
 var parse = require('../src/CsvParser.js');
-var account = require('../src/Account.js');
+var accountMaker = require('../src/Account.js');
 
 var getDatabase = require('../src/dataMapper/Database.js');
 var getAccountMapper = require('../src/dataMapper/AccountMapper.js');
@@ -10,12 +10,34 @@ var _ = require('lodash');
 var moment = require('moment');
 var util = require('util');
 var async = require('async');
-var log = require('debug')('app')
+var log = require('debug')('app');
+
+var csv = require('fast-csv');
 
 var dbPath = './stockmon2.sqlite';
+
+if (process.argv.length < 4) {
+    console.log('Usage: node testDrive.js accountId/name csvFilePath  createDb ');
+    process.exit(1);
+}
+
+
+var accountId = 0,
+    userName = process.argv[2],
+    pathToCsv = process.argv[3],
+
+    shouldCreateDb = process.argv[4];
+
+if (_.isInteger(userName)) {
+    accountId = _.toInteger(userName);
+}
+
 try {
-    fs.accessSync(dbPath, fs.F_OK);
-    fs.unlinkSync(dbPath);
+    if (shouldCreateDb) {
+        fs.accessSync(dbPath, fs.F_OK);
+
+        fs.unlinkSync(dbPath);
+    }
 }
 catch (e) {
     if (!(e.code === 'ENOENT')) {
@@ -28,72 +50,129 @@ var database = getDatabase(dbPath);
 var mapper = getAccountMapper(database);
 var snapshotMapper = getSnapshotMapper(database);
 
-var istream = fs.createReadStream('./app/trades_master.csv');
+var istream = fs.createReadStream(pathToCsv);
+
 async.waterfall([
     cb => {
-        mapper.load(1, (err, account) => cb(err, account))
+        if (accountId === 0) {
+            cb(null, accountMaker.create(userName));
+        } else {
+            mapper.load(accountId, (err, acc) => cb(null, acc));
+        }
     },
     (acc, cb) => {
-        acc.getHoldings((err, holdings) => cb(err, holdings))
+        log('Reading csv..');
+        parse(istream, (err, results) => cb(null, acc, results));
     },
-    (holdings, cb) => {
-        database.close(err => cb(err, holdings));
+    (acc, parsedResults, cb) => {
+        log('Loading trades...');
+
+        acc.register(parsedResults.trades);
+        acc.addDividends(parsedResults.dividends);
+        log('Saving account.');
+        mapper.save(acc, (err, acc) => {
+            accountId = acc.id();
+            cb(null, acc);
+        });
+    },
+    (acc, cb) => {
+        log("Getting holdings..");
+        acc.getHoldings((err, holdings) => {
+            finalHoldings = holdings;
+            cb(err, acc);
+        });
+    },
+    (account, cb) => {
+        log('Getting snapshots');
+        account.getAnnualStmts((err, snapshots) => {
+            cb(err, account, snapshots);
+        });
+    },
+    (acc, snapshots, cb) => {
+        log('Saving snapshots..');
+        //var lastSnapshot = _.last(snapshots);
+        var lastSnapshot = snapshots.forYear(2014);
+        snapshots = _.initial(snapshots);
+        if (snapshots.length > 0) {
+            snapshotMapper.saveSnapshots(acc.id(), snapshots, (err) => {
+                cb(err, acc, lastSnapshot);
+            })
+        } else {
+            cb(null, acc, lastSnapshot);
+        }
+
+    },
+    (acc, latestSnapshot, cb) => {
+        var records = latestSnapshot.gains();
+
+
+        if (records.length > 0) {
+            //csvStream = csv.createWriteStream({ headers: true });
+            csv.writeToPath('./out/gains' + accountId + '.csv',
+                records,
+                {
+                    headers: true,
+                    transform: function (row) {
+                        return {
+                            date: row.date.format('YYYY-MM-DD'),
+                            stock: row.stock,
+                            cost_price: row.CP.toString(),
+                            sale_price: row.SP.toString(),
+                            units: row.qty,
+                            brokerage: row.brokerage.toString(),
+                            gain: row.gain.toString(),
+                            ST: (row.isShortTerm ? "TAX" : "FREE")
+                        };
+                    }
+                });
+
+        }
+        records = latestSnapshot.dividends();
+        if (records.length > 0) {
+            csv.writeToPath('./out/divs' + accountId + '.csv',
+                records,
+                {
+                    headers: true,
+                    transform: function (row) {
+                        return {
+                            date: row.date.format('YYYY-MM-DD'),
+                            stock: row.stock,
+                            gain: row.amount.toString(),
+                            ST: "DIV"
+                        };
+                    }
+                });
+        }
+         acc.getHoldings((err, holdings) => {
+            if (holdings.length > 0) {
+                csv.writeToPath('./out/holdings' + accountId + '.csv',
+                    holdings,
+                    {
+                        headers: true,
+                        transform: function (row) {
+                            return {
+                                Stock: row.stock,
+                                Units: row.qty,
+                                AveragePrice: row.avg_price.toString()
+                            };
+                        }
+                    });
+            }
+        });
+
+        database.close(err => {
+            log('Db is closed for business => ' + err);
+            cb(err, accountId);
+        });
     }
 ],
-    (err, holdings) => {
-        console.log('%j', holdings);
-    });
+    (err, id) => {
+        if (!err) {
+            log('Yay! saved snapshots for ' + id);
+        } else {
+            log('Potti' + err);
+        }
 
-// async.waterfall([
-//     cb => {
-//         log('Reading csv..');
-//         parse(istream, (err, results) => {
-//             log('Loading trades...');
-//             var a = account.create('gishu');
-//             a.register(results.trades);
-//             a.addDividends(results.dividends);
-//             cb(err, a);
-//         });
-//     },
-//     (account, cb) => {
-//         log('Saving account.');
-//         mapper.save(account, (err, account) => {
-//             cb(null, account);
-//         });
-//     },
-//     (account, cb) => {
-//         log('Getting snapshots');
-//         account.getAnnualStmts((err, snapshots) => {
-//             if (err) {
-//                 cb(err, null);
-//                 return;
-//             }
-//             cb(null, account.id(), snapshots);
-//         });
-//     },
-//     (accountId, snapshots, cb) => {
-//         log('Saving snapshots..');
-//         //snapshots = _.initial(snapshots);
-//         if (snapshots.length > 0) {
-//             snapshotMapper.saveSnapshots(accountId, snapshots, (err) => {
-//                 cb(err, accountId);
-//             })
-//         } else {
-//             cb(null, accountId);
-//         }
-
-//     },
-//     (accountId, cb) => {
-//         database.close(err => cb(err, accountId));
-//     }
-// ],
-//     (err, id) => {
-//         if (!err) {
-//             log('Yay! saved snapshots for ' + id);
-//         } else {
-//             log('Potti' + err);
-//         }
-//         //database.close(err => log('DB Close: ' + err));
-//     }
-// );
+    }
+);
 
