@@ -6,9 +6,10 @@ var log = require('debug')('account');
 
 BigNumber.config({ DECIMAL_PLACES: 2 });
 
-function create(name) {
+function create(name, broker) {
     var _nextId = -1,
-        _id, _name,
+        _id,
+        _name, _broker,
         _holdings = {},
         _mapStockToQty = {}, // map of stock to number of units
         _trades = [], _dividends = [];
@@ -19,11 +20,13 @@ function create(name) {
     } else {
         _id = _nextId--;
         _name = name;
+        _broker = broker;
     }
 
     function __loadFromState(state) {
         _id = state.id;
         _name = state.name;
+        _broker = state.broker;
         _holdings = _.cloneDeep(state.holdings);
         _mapStockToQty = _.reduce(_holdings,
             (register, trades, stock) => {
@@ -83,7 +86,7 @@ function create(name) {
 
     function getHoldings(callback) {
         simulate(_holdings, _trades, _dividends, (err, snapshots) => {
-            if (err){
+            if (err) {
                 log('Simulation failed with ' + err);
                 callback(err, null);
             }
@@ -118,9 +121,10 @@ function create(name) {
         getHoldings: getHoldings,
         id: getId,
         getName: getName,
+        broker: () => _broker,
         getAnnualStmts: getAnnualStmts,
         addDividends: addDividends,
-        __state: { id: _id, name: _name, trades: _trades, dividends: _dividends }
+        __state: { id: _id, name: _name, broker: _broker, trades: _trades, dividends: _dividends }
     };
 }
 

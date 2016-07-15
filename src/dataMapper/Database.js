@@ -32,7 +32,7 @@ module.exports = function (pathToDatabase) {
                     db.serialize(() => {
                         async.series([
                             cb => {
-                                db.run('create table Accounts (Id INTEGER PRIMARY KEY, Name TEXT);', [], err => cb(err));
+                                db.run('create table Accounts (Id INTEGER PRIMARY KEY, Name TEXT, Broker TEXT);', [], err => cb(err));
                             },
                             cb => {
                                 db.run('create table Buys(Id INTEGER PRIMARY KEY, AccountId INTEGER, Date TEXT, Stock TEXT, Qty INTEGER, Price TEXT, Brokerage TEXT, Notes TEXT,' +

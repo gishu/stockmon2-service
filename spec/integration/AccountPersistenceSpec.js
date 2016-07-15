@@ -17,8 +17,7 @@ describe('Account', function () {
     var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-        //helpers.deleteDb();
-
+        
         database = getDatabase();
         mapper = getAccountMapper(database);
         snapshotMapper = getSnapshotMapper(database);
@@ -35,7 +34,7 @@ describe('Account', function () {
         parse(helpers.getCsvStream('sample_trades.csv'), function (err, results) {
             expect(err).toBeNull();
             var inMemAccount, fromDisk;
-            inMemAccount = account.create('Mushu');
+            inMemAccount = account.create('Mushu', 'HDFC');
             inMemAccount.register(results.trades);
             inMemAccount.addDividends(results.dividends);
 
@@ -65,6 +64,7 @@ describe('Account', function () {
                     }
                     expect(account.id()).toEqual(1);
                     expect(account.getName()).toEqual('Mushu');
+                    expect(account.broker()).toEqual('HDFC');
 
                     snapshot = snapshots.forYear(2008);
                     var divs = snapshot.dividends();

@@ -5,10 +5,11 @@ describe('Account', function () {
     var BigNumber = require('bignumber.js');
     var make = require('../../src/Trade.js');
 
-    it('has an id and belongs to a person', function () {
-        var x = account.create('Mushu');
+    it('has an id, owner & broker', function () {
+        var x = account.create('Mushu', 'HDFC');
         expect(x.id()).toBeLessThan(0);
         expect(x.getName()).toEqual('Mushu');
+        expect(x.broker()).toEqual('HDFC');
     });
 
 

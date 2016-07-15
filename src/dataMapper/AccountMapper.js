@@ -47,7 +47,7 @@ function getAccountMapper(database) {
                                 if (err) {
                                     acb(err, null);
                                 } else {
-                                    acb(null, { id: id, name: row['Name'] });
+                                    acb(null, { id: id, name: row['Name'], broker: row['Broker'] });
                                 }
                             });
                         },
@@ -96,6 +96,7 @@ function getAccountMapper(database) {
                             loadedState = {
                                 id: accInfo['id'],
                                 name: accInfo['name'],
+                                broker: accInfo['broker'],
                                 trades: trades,
                                 dividends: dividends,
                                 holdings: optimizeHoldings || {}
@@ -131,7 +132,7 @@ function getAccountMapper(database) {
                     (cb) => {
                         var accountId = state.id;
                         if (accountId < 0) {
-                            db.run('insert into Accounts(Name) values(?)', [state.name], function (err) {
+                            db.run('insert into Accounts(Name, Broker) values(?,?)', [state.name, state.broker], function (err) {
                                 cb(err, this.lastID);
                             });
                         } else {
