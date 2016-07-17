@@ -3,24 +3,23 @@ var moment = require('moment');
 var _ = require('lodash');
 
 
-function makeTrade(date, stock, qty, price, is_buy, brokerage, notes) {
+function makeTrade(date, stock, qty, price, is_buy, notes) {
     var parsedPrice = parseToBigNumber(price);
-    var parsedBrokerage = parseToBigNumber(brokerage);
+
     return {
         'date': parseDate(date),
         'stock': _.toUpper(stock),
         'qty': qty,
         'is_buy': is_buy,
         'price': parsedPrice,
-        'notes': notes || '',
-        'brokerage': parsedBrokerage
+        'notes': notes || ''
     };
 }
-function makeBuy(date, stock, qty, price, brokerage, notes) {
-    return makeTrade(date, stock, qty, price, true, brokerage, notes);
+function makeBuy(date, stock, qty, price, notes) {
+    return makeTrade(date, stock, qty, price, true, notes);
 }
-function makeSale(date, stock, qty, price, brokerage, notes) {
-    return makeTrade(date, stock, qty, price, false, brokerage, notes);
+function makeSale(date, stock, qty, price, notes) {
+    return makeTrade(date, stock, qty, price, false, notes);
 }
 
 function parseDate(date) {
@@ -62,11 +61,18 @@ function makeDividend(date, stock, amount, notes) {
     };
 }
 function loadBuy(row) {
-    var buy = makeBuy(moment(row.Date).toDate(), row.Stock, row.Qty, row.Price, row.Brokerage, row.Notes);
+    var buy = makeBuy(moment(row.Date).toDate(), row.Stock, row.Qty, row.Price, row.Notes);
     buy.id = row.Id;
+    buy.brokerage = parseToBigNumber(row.Brokerage);
     return buy;
 }
+function loadSale(row) {
+    var sale = makeSale(moment(row.Date), row.Stock, row.Qty, row.Price, row.Notes);
+    sale.id = row.Id;
+    sale.brokerage = parseToBigNumber(row.Brokerage);
+    return sale;
 
+}
 function loadDiv(row) {
     var div = makeDividend(moment(row.Date).toDate(), row.Stock, row.Amount, row.Notes);
     div.id = row.Id;
@@ -79,5 +85,6 @@ module.exports = {
     makeDividend: makeDividend,
     makeGain: makeGain,
     loadBuy: loadBuy,
+    loadSale: loadSale,
     loadDiv: loadDiv
 };

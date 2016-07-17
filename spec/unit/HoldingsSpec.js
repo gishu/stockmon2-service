@@ -19,7 +19,7 @@ describe('Account', function () {
                 parse( helpers.getCsvStream('split_trades.csv'), (err, results) => cb(err, results));
             },
             (results, cb) => {
-                var a = account.create('G');
+                var a = account.create('G', 'HDFC');
                 a.register(results.trades);
                 a.addDividends(results.dividends);
                 a.getHoldings((err, holdings) => cb(err, holdings));

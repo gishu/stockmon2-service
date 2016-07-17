@@ -65,11 +65,8 @@ function getAccountMapper(database) {
                                 if (err) {
                                     acb(err, null);
                                 } else {
-                                    acb(null, _.map(rows, (row) => {
-                                        var sale = make.makeSale(moment(row.Date), row.Stock, row.Qty, row.Price, row.Brokerage);
-                                        sale.id = row.Id;
-                                        return sale;
-                                    }));
+                                    acb(null, _.map(rows, make.loadSale));
+                                    
                                 }
                             });
                         },

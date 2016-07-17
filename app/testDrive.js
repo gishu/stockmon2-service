@@ -17,19 +17,19 @@ var csv = require('fast-csv');
 var dbPath = './stockmon2.sqlite';
 
 if (process.argv.length < 4) {
-    console.log('Usage: node testDrive.js accountId/name csvFilePath  createDb ');
+    console.log('Usage: node testDrive.js accountId/(name,broker) csvFilePath  createDb ');
     process.exit(1);
 }
 
 
 var accountId = 0,
-    userName = process.argv[2],
+    args = process.argv[2].split(','),
     pathToCsv = process.argv[3],
 
     shouldCreateDb = process.argv[4];
 
-if (_.isInteger(userName)) {
-    accountId = _.toInteger(userName);
+if (_.isInteger(args)) {
+    accountId = _.toInteger(args);
 }
 
 try {
@@ -55,7 +55,7 @@ var istream = fs.createReadStream(pathToCsv);
 async.waterfall([
     cb => {
         if (accountId === 0) {
-            cb(null, accountMaker.create(userName));
+            cb(null, accountMaker.create.apply(null, args));
         } else {
             mapper.load(accountId, (err, acc) => cb(null, acc));
         }
@@ -90,8 +90,8 @@ async.waterfall([
     },
     (acc, snapshots, cb) => {
         log('Saving snapshots..');
-        //var lastSnapshot = _.last(snapshots);
-        var lastSnapshot = snapshots.forYear(2014);
+        var lastSnapshot = _.last(snapshots);
+        //var lastSnapshot = snapshots.forYear(2014);
         snapshots = _.initial(snapshots);
         if (snapshots.length > 0) {
             snapshotMapper.saveSnapshots(acc.id(), snapshots, (err) => {

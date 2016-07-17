@@ -1,7 +1,6 @@
 var _ = require('lodash');
 var BigNumber = require('bignumber.js');
 var make = require('./Trade.js');
-var calcBrokerage = require('./HdfcBrokerage.js');
 var log = require('debug')('parser');
 
 function parse(csvStream, callback) {
@@ -28,10 +27,10 @@ function parse(csvStream, callback) {
                         price = new BigNumber(record['UnitPrice'].replace(',', ''));
                         qty = parseInt(record['Qty']);
                         if (record['Type'] != 'SOLD') {
-                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, true), record['Notes']));
+                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, record['Notes']));
                         }
                         else {
-                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, calcBrokerage(qty, price, false), record['Notes']));
+                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price,  record['Notes']));
                         }
                     }
                 }

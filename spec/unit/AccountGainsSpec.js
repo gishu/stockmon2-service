@@ -11,14 +11,14 @@ var BigNumber = require('bignumber.js');
 var helpers = require('../helpers/test_helper.js');
 
 describe('Account', function () {
-   
+
     it('can compute long term gains', function (done) {
         async.waterfall([
             (cb) => {
                 parse(helpers.getCsvStream('sample_trades.csv'), (err, results) => cb(err, results));
             },
             (results, cb) => {
-                var inMemAccount = account.create('G');
+                var inMemAccount = account.create('G', 'HDFC');
                 inMemAccount.register(results.trades);
                 inMemAccount.addDividends(results.dividends);
                 inMemAccount.getAnnualStmts((err, snapshots) => cb(err, snapshots));
@@ -61,7 +61,7 @@ describe('Account', function () {
             },
 
             (results, cb) => {
-                var inMemAccount = account.create('G');
+                var inMemAccount = account.create('G', 'HDFC');
                 inMemAccount.register(results.trades);
                 inMemAccount.addDividends(results.dividends);
                 inMemAccount.getAnnualStmts((err, snapshots) => cb(err, snapshots));
@@ -108,7 +108,7 @@ describe('Account', function () {
             },
 
             (results, cb) => {
-                var inMemAccount = account.create('G');
+                var inMemAccount = account.create('G', 'HDFC');
                 inMemAccount.register(results.trades);
                 inMemAccount.addDividends(results.dividends);
                 inMemAccount.getAnnualStmts((err, snapshots) => cb(err, snapshots));
@@ -137,6 +137,35 @@ describe('Account', function () {
                 snapshot = snapshots.shift();
                 expect(snapshot.year()).toBe(2015);
                 expect(snapshot.netGain().toString()).toBe('0');
+
+                done();
+            }
+        );
+    });
+
+    it('will compute brokerage as per associated broker', done => {
+        async.waterfall([
+            (cb) => {
+                parse(helpers.getCsvStream('sample_trades.csv'), (err, results) => cb(err, results));
+            },
+            (results, cb) => {
+                var inMemAccount = account.create('G', 'ZERODHA');
+                inMemAccount.register(results.trades);
+                inMemAccount.getAnnualStmts((err, snapshots) => cb(err, snapshots));
+            }
+        ],
+            (err, snapshots) => {
+                var snapshot, gains;
+                expect(err).toBeNull();
+
+                // only sales in 2009
+                snapshot = snapshots.forYear(2009);
+                gains = snapshot.gains();
+                expect(_.map(gains, 'stock')).toEqual(['HDFC', 'HDFCBANK']);
+                expect(_.map(gains, 'qty')).toEqual([4, 10]);
+                expect(_.map(gains, g => g.gain.toString())).toEqual(['1837.53', '5741.04']);
+
+                expect(snapshot.dividends().length).toEqual(0);
 
                 done();
             }

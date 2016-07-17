@@ -1,8 +1,10 @@
 var _ = require('lodash');
 var util = require('util');
 var BigNumber = require('bignumber.js');
-var simulate = require('./Simulation.js');
 var log = require('debug')('account');
+
+var simulate = require('./Simulation.js');
+var brokerRegistry = require('./brokerRegistry.js');
 
 BigNumber.config({ DECIMAL_PLACES: 2 });
 
@@ -21,6 +23,7 @@ function create(name, broker) {
         _id = _nextId--;
         _name = name;
         _broker = broker;
+        validate();
     }
 
     function __loadFromState(state) {
@@ -49,6 +52,8 @@ function create(name, broker) {
     }
     function register(trades) {
         try {
+            var brokerageCalc;
+
             _.each(trades, function (trade, index) {
                 var thisTrade = Object.create(trade),
                     saleQty,
@@ -57,7 +62,10 @@ function create(name, broker) {
                 thisTrade.id = thisTrade.id || _nextId--;
                 _trades.push(thisTrade);
                 _mapStockToQty[trade.stock] = _mapStockToQty[trade.stock] || 0;
-
+                if (!thisTrade.brokerage) {
+                    brokerageCalc = brokerRegistry.getBrokerageCalc(_broker);
+                    thisTrade.brokerage = brokerageCalc(thisTrade.qty, thisTrade.price, thisTrade.is_buy);
+                }
                 if (trade.is_buy) {
                     thisTrade.balance = trade.qty;
 
@@ -79,15 +87,21 @@ function create(name, broker) {
         }
     }
 
+    function validate() {
+        if (!brokerRegistry.hasBroker(_broker)) {
+            throw new Error(_broker + ' is not a known broker!');
+        }
+    }
+
     function average(qty1, price1, qty2, price2) {
         var temp = price1.mul(qty1).plus(price2.mul(qty2));
         return temp.div(qty1 + qty2);
     }
 
     function getHoldings(callback) {
-        simulate(_holdings, _trades, _dividends, (err, snapshots) => {
+        simulate(_holdings, _trades, _dividends, brokerRegistry.getBrokerageCalc(_broker), (err, snapshots) => {
             if (err) {
-                log('Simulation failed with ' + err);
+                log('Simulation failed with ' + err.stack);
                 callback(err, null);
             }
             var holdings = _.last(snapshots).holdings();
@@ -111,7 +125,7 @@ function create(name, broker) {
         });
     }
     function getAnnualStmts(callback) {
-        return simulate(_holdings, _trades, _dividends, callback);
+        return simulate(_holdings, _trades, _dividends, brokerRegistry.getBrokerageCalc(_broker), callback);
     }
 
     function getId() { return _id; }

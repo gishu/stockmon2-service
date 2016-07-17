@@ -39,7 +39,7 @@ describe('Account', function () {
 
 
         beforeEach((done) => {
-            inMemAccount = account.create('Mushu'),
+            inMemAccount = account.create('Mushu', 'HDFC'),
                 savedAccountId = 0;
 
             async.waterfall([

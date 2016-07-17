@@ -60,7 +60,8 @@ describe('Account', function () {
                     var gain, snapshot;
 
                     if (err) {
-                        done.fail(err.message);
+                        done.fail(err.stack);
+                        return;
                     }
                     expect(account.id()).toEqual(1);
                     expect(account.getName()).toEqual('Mushu');
@@ -94,7 +95,7 @@ describe('Account', function () {
                 parse(helpers.getCsvStream('split_trades.csv'), (err, results) => cb(err, results));
             },
             (results, cb) => {
-                var acc = account.create('G');
+                var acc = account.create('G', 'HDFC');
                 acc.register(results.trades);
                 acc.addDividends(results.dividends);
                 mapper.save(acc, (err, account) => {

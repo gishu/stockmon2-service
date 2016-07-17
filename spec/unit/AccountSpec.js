@@ -15,7 +15,7 @@ describe('Account', function () {
 
 
     it('can report holdings sorted alphabetically by stock name', function (done) {
-        var a = account.create('Gishu');
+        var a = account.create('Gishu', 'HDFC');
 
         var trades = [make.makeBuy('2008-07-14', 'HDFCBANK', 10, '1030', '69.01'),
             make.makeBuy('2009-09-03', 'HDFC', 4, '2705', '181.24'),
@@ -46,9 +46,15 @@ describe('Account', function () {
 
     it('throws in case of insufficient balance for a sale', function () {
         var trades = [make.makeSale('2009-09-23', 'HDFCBANK', 5, '1607.1', '53.84')];
-        var a = account.create(1, 'Gishu');
+        var a = account.create('Gishu', 'HDFC');
         expect(function () { a.register(trades); }).toThrow(
             new Error('Insufficient funds to sell 5 of HDFCBANK. Cur Balance=0'));
     });
 
+    it('throws in case an unknown broker is specified', () => {
+        expect(() => { account.create('mourinho', 'MENDES'); }).toThrow(
+            new Error('MENDES is not a known broker!')
+        );
+
+    });
 });
