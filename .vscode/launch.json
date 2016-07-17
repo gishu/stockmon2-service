@@ -6,7 +6,7 @@
             "type": "node",
             "request": "launch",
             //"program": "${workspaceRoot}/spec/jasmine_runner.js",
-            "program": "${workspaceRoot}/app/testDrive.js",
+            "program": "${workspaceRoot}/bin/www",
             "stopOnEntry": false,
             "args": [],
             "cwd": "${workspaceRoot}",

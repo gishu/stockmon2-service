@@ -30,7 +30,7 @@ function parse(csvStream, callback) {
                             trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, record['Notes']));
                         }
                         else {
-                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price,  record['Notes']));
+                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, record['Notes']));
                         }
                     }
                 }

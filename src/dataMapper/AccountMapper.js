@@ -66,7 +66,6 @@ function getAccountMapper(database) {
                                     acb(err, null);
                                 } else {
                                     acb(null, _.map(rows, make.loadSale));
-                                    
                                 }
                             });
                         },
