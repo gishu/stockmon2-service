@@ -142,7 +142,7 @@ router.put('/:id/snapshots/:year(\\d{4})', (req, res) => {
     (account, cb) => account.getAnnualStmts(
       (err, snapshots) => cb(err, snapshots)),
     (snapshots, cb) => {
-      var toBeSaved = _.filter(snapshots, s => s.year() >= year);
+      var toBeSaved = _.filter(snapshots, s => s.year() <= year);
       if (toBeSaved.length == 0) {
         cb(null, null);
         return;
