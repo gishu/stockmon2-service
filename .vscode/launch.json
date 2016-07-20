@@ -18,7 +18,7 @@
             "env": {
                 "NODE_ENV": "development",
                 "DEBUG": "*",
-                "STOCKMON_DB": "../dev/stockmon2.sqlite"
+                "STOCKMON_DB": "../dev/stockmon.sqlite"
             },
             "externalConsole": false,
             "sourceMaps": false,

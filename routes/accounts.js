@@ -8,6 +8,8 @@ var tmp = require('tmp');
 var csv = require('fast-csv'),
   CSV_OPTIONS = { dir: './tmp', postfix: '.csv' };
 var fs = require('fs');
+var BigNumber = require('bignumber.js');
+
 
 
 var parse = require('../src/CsvParser.js');
@@ -94,6 +96,41 @@ router.get('/:id/holdings', (req, res) => {
       });
     });
 
+});
+
+router.get('/:id/snapshots', (req, res) => {
+  var accountId = _.toInteger(req.params.id),
+    accMapper = req.app.get('accountMapper');
+
+  async.waterfall([
+    (cb) => accMapper.load(accountId,
+      (err, acc) => cb(err, acc)),
+    (account, cb) => account.getAnnualStmts(
+      (err, snapshots) => cb(err, snapshots))
+  ],
+    function (err, snapshots) {
+      if (err) {
+        log('Failed to retrieve snapshot for ' + year + err);
+        res.sendStatus(500);
+        return;
+      }
+      try {
+        var peeks = snapshots.map(function (s) {
+          return {
+            year: s.year(),
+            url: '/accounts' + req.url + '/' + s.year(),
+            longTerm: s.longTermGains(),
+            shortTerm: s.shortTermGains(),
+            dividends: _.reduce(s.dividends(), (sum, d) => sum.plus(d.amount), new BigNumber(0))
+          };
+        });
+        res.json(peeks);
+      }
+      catch (err) {
+        log(err);
+        throw err;
+      }
+    });
 });
 
 router.get('/:id/snapshots/:year(\\d{4})', (req, res) => {
