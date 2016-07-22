@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  h1 Holdings for #{year}
+
+  table
+    tr
+      th= Stock
+      th= Balance
+      th= Price
+    each holding in holdings
+      tr
+        td= holding.stock
+        td= holding.date
+        td= holding.qty
+        td= holding.price

@@ -134,113 +134,146 @@ router.get('/:id/snapshots', (req, res) => {
 });
 
 router.get('/:id/snapshots/:year(\\d{4})', (req, res) => {
-  var accountId = _.toInteger(req.params.id),
-    year = _.toInteger(req.params.year),
-    accMapper = req.app.get('accountMapper');
+  getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
+    if (err) {
+      res.sendStatus(500);
+      return;
+    }
+    if (!snapshot) {
+      res.sendStatus(404);
+      return;
+    }
 
-  async.waterfall([
-    (cb) => accMapper.load(accountId,
-      (err, acc) => cb(err, acc)),
-    (account, cb) => account.getAnnualStmts(
-      (err, snapshots) => cb(err, snapshots))
-  ],
-    function (err, snapshots) {
+    var tmpFile = tmp.fileSync(CSV_OPTIONS),
+      ws = fs.createWriteStream(tmpFile.name);
+
+    ws.on('finish', () => res.download(tmpFile.name, 'snapshot' + year + '.csv'));
+    writeSnapshot(snapshot, ws);
+  });
+
+  router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
+    getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
       if (err) {
-        log('Failed to retrieve snapshot for ' + year + err);
         res.sendStatus(500);
         return;
       }
-      var snapshot = snapshots.forYear(year);
       if (!snapshot) {
         res.sendStatus(404);
         return;
       }
 
-      var tmpFile = tmp.fileSync(CSV_OPTIONS),
-        ws = fs.createWriteStream(tmpFile.name);
-
-      ws.on('finish', () => res.download(tmpFile.name, 'snapshot' + year + '.csv'));
-      writeSnapshot(snapshot, ws);
-
-    });
-
-});
-
-router.put('/:id/snapshots/:year(\\d{4})', (req, res) => {
-  var accountId = _.toInteger(req.params.id),
-    year = _.toInteger(req.params.year),
-    accMapper = req.app.get('accountMapper'),
-    snapshotMapper = req.app.get('snapshotMapper');
-
-
-  async.waterfall([
-    (cb) => accMapper.load(accountId,
-      (err, acc) => cb(err, acc)),
-    (account, cb) => account.getAnnualStmts(
-      (err, snapshots) => cb(err, snapshots)),
-    (snapshots, cb) => {
-      var toBeSaved = _.filter(snapshots, s => s.year() <= year);
-      if (toBeSaved.length == 0) {
-        cb(null, null);
-        return;
-      }
-      snapshotMapper.saveSnapshots(accountId, toBeSaved, (err) => {
-        cb(err, null);
+      var viewModel = { year: snapshot.year(), holdings: [] };
+      var holdings = snapshot.holdings();
+      var keys = _(holdings).keys().filter(k => holdings[k].length > 0).value();
+      keys.sort();
+      _.each(keys, stock => {
+        var trades = holdings[stock];
+        _.each(trades, t => {
+          viewModel.holdings.push({ stock: t.stock, date: t.date.format('YYYY-MMM-DD'), qty: t.balance, price: t.price.toString() })
+        })
       })
-    }
-  ],
-    function (err, snapshots) {
-      if (err) {
-        log('Failed to save snapshots till ' + year + err);
-        res.sendStatus(500);
-        return;
+      res.render('holdings', viewModel);
+    });
+  });
+  router.put('/:id/snapshots/:year(\\d{4})', (req, res) => {
+    var accountId = _.toInteger(req.params.id),
+      year = _.toInteger(req.params.year),
+      accMapper = req.app.get('accountMapper'),
+      snapshotMapper = req.app.get('snapshotMapper');
+
+
+    async.waterfall([
+      (cb) => accMapper.load(accountId,
+        (err, acc) => cb(err, acc)),
+      (account, cb) => account.getAnnualStmts(
+        (err, snapshots) => cb(err, snapshots)),
+      (snapshots, cb) => {
+        var toBeSaved = _.filter(snapshots, s => s.year() <= year);
+        if (toBeSaved.length == 0) {
+          cb(null, null);
+          return;
+        }
+        snapshotMapper.saveSnapshots(accountId, toBeSaved, (err) => {
+          cb(err, null);
+        })
       }
+    ],
+      function (err, snapshots) {
+        if (err) {
+          log('Failed to save snapshots till ' + year + err);
+          res.sendStatus(500);
+          return;
+        }
 
-      res.sendStatus(201);
-    });
-});
+        res.sendStatus(201);
+      });
+  });
 
-function writeSnapshot(snapshot, ws) {
-  var csvStream = csv.format({ headers: true })
-    .transform(function (row) {
-      return {
-        date: row.date.format('YYYY-MM-DD'),
-        stock: row.stock,
-        cost_price: row.CP ? row.CP.toString() : '',
-        sale_price: row.SP ? row.SP.toString() : '',
-        units: row.qty || '',
-        brokerage: row.brokerage ? row.brokerage.toString() : '',
-        gain: row.gain ? row.gain.toString() : row.amount.toString(),
-        ST: (row.isShortTerm ? "TAX" : "")
-      };
-    });
+  function getSnapshot(params, mapper, callback) {
+    var accountId = _.toInteger(params.id),
+      year = _.toInteger(params.year),
+      accMapper = mapper;
 
-  csvStream.pipe(ws);
+    async.waterfall([
+      (cb) => accMapper.load(accountId,
+        (err, acc) => cb(err, acc)),
+      (account, cb) => account.getAnnualStmts(
+        (err, snapshots) => cb(err, snapshots))
+    ],
+      function (err, snapshots) {
+        if (err) {
+          log('Failed to retrieve snapshot for ' + year + err);
+          res.sendStatus(500);
+          callback(err, null);
+          return;
+        }
 
-  snapshot.gains().forEach(value => csvStream.write(value));
-  snapshot.dividends().forEach(value => csvStream.write(value));
+        callback(null, snapshots.forYear(year));
+      }
+    );
+  }
 
-  csvStream.end();
-
-}
-
-function writeHoldingsAsCsvAttachment(holdings, res) {
-
-  var tmpFile = tmp.fileSync(CSV_OPTIONS);
-
-  csv.writeToPath(tmpFile.name,
-    holdings,
-    {
-      headers: true,
-      transform: function (row) {
+  function writeSnapshot(snapshot, ws) {
+    var csvStream = csv.format({ headers: true })
+      .transform(function (row) {
         return {
-          Stock: row.stock,
-          Units: row.qty,
-          AveragePrice: row.avg_price.toString()
+          date: row.date.format('YYYY-MM-DD'),
+          stock: row.stock,
+          cost_price: row.CP ? row.CP.toString() : '',
+          sale_price: row.SP ? row.SP.toString() : '',
+          units: row.qty || '',
+          brokerage: row.brokerage ? row.brokerage.toString() : '',
+          gain: row.gain ? row.gain.toString() : row.amount.toString(),
+          ST: (row.isShortTerm ? "TAX" : "")
         };
-      }
-    }).on('finish', () => res.download(tmpFile.name, 'holdings.csv'));
+      });
 
-}
+    csvStream.pipe(ws);
 
-module.exports = router;
+    snapshot.gains().forEach(value => csvStream.write(value));
+    snapshot.dividends().forEach(value => csvStream.write(value));
+
+    csvStream.end();
+
+  }
+
+  function writeHoldingsAsCsvAttachment(holdings, res) {
+
+    var tmpFile = tmp.fileSync(CSV_OPTIONS);
+
+    csv.writeToPath(tmpFile.name,
+      holdings,
+      {
+        headers: true,
+        transform: function (row) {
+          return {
+            Stock: row.stock,
+            Units: row.qty,
+            AveragePrice: row.avg_price.toString()
+          };
+        }
+      }).on('finish', () => res.download(tmpFile.name, 'holdings.csv'));
+
+  }
+
+  module.exports = router;

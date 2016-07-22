@@ -143,6 +143,9 @@ describe('Account', function () {
         );
     });
 
+    xit('will not recompute annual statements if they are already persisted');
+    
+
     it('will compute brokerage as per associated broker', done => {
         async.waterfall([
             (cb) => {

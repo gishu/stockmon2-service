@@ -29,7 +29,7 @@ describe('Account', function () {
         a.register(trades);
 
         a.getHoldings((err, holdings) => {
-            // BUGCheck: to ensure simulation doesn't modify actual trades + uses cloned trades to manipulate balances
+            // BUGCheck: Multiple calls should work - simulation shouldn't modify actual trades + uses cloned trades to manipulate balances
             a.getHoldings((err, holdings) => {
                 expect(err).toBeNull();
                 expect(holdings).toJSONEqual(expected_holdings);
