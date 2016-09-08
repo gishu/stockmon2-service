@@ -6,3 +6,13 @@ body {
 a {
   color: #00B7FF;
 }
+
+.short {
+  color: red;
+  border: 1px dashed tomato;
+}
+
+.grid{
+  width: 500px;
+  height: 100%;
+}

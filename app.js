@@ -65,7 +65,7 @@ app.use(function (err, req, res, next) {
 initDbStuff(app);
 
 function initDbStuff(theApp) {
-  var pathToDatabase = process.env.stockmon_db || './stockmon.sqlite';
+  var pathToDatabase = process.env.STOCKMON_DB || './stockmon.sqlite';
   var database = getDatabase(pathToDatabase);
   theApp.set('db', database);
   theApp.set('accountMapper', getAccountMapper(database));

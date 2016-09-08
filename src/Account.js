@@ -133,6 +133,7 @@ function create(name, broker) {
     return {
         register: register,
         getHoldings: getHoldings,
+        trades: () => _trades,
         id: getId,
         getName: getName,
         broker: () => _broker,

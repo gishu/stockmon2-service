@@ -1,0 +1,17 @@
+doctype html
+html(ng-app='myAngApp')
+  head
+    script(src='http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.js')
+    script(src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-touch.js")
+    script(src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-animate.js")
+    
+    script(src='/ui-comp/angular-ui-grid/ui-grid.js')
+    link(rel='stylesheet', href='/ui-comp/angular-ui-grid/ui-grid.css')
+
+    script(src='/scripts/my-ang-service.js')
+    script(src='/scripts/my-ang-app.js')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    
+  body
+    div(ng-controller='MainCtrl')
+      div#my-ang-grid.grid(ui-grid='gridViewModel')

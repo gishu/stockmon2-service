@@ -5,12 +5,23 @@ block content
 
   table
     tr
-      th= Stock
-      th= Balance
-      th= Price
+      th Stock
+      th Balance
+      th Units
+      th Price
+      th Status
     each holding in holdings
-      tr
-        td= holding.stock
-        td= holding.date
-        td= holding.qty
-        td= holding.price
+      if holding.is_long_term
+        tr
+          td= holding.stock
+          td= holding.date
+          td= holding.qty
+          td= holding.price
+          td READY
+      else
+        tr
+          td.short= holding.stock
+          td.short= holding.date
+          td.short= holding.qty
+          td.short= holding.price
+          td.short 
