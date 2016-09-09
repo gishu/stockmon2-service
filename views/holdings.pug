@@ -11,17 +11,16 @@ block content
       th Price
       th Status
     each holding in holdings
-      if holding.is_long_term
-        tr
-          td= holding.stock
-          td= holding.date
-          td= holding.qty
-          td= holding.price
-          td READY
-      else
-        tr
-          td.short= holding.stock
-          td.short= holding.date
-          td.short= holding.qty
-          td.short= holding.price
-          td.short 
+      - 
+        var time_to_no_tax = null 
+        if (holding.age_months < 9)
+          time_to_no_tax = '3m+'
+        else if(holding.age_months < 12)
+          time_to_no_tax = '<3m'
+        
+      tr(class=time_to_no_tax ? (time_to_no_tax == '3m+' ? 'short' : 'almost'):null)
+        td= holding.stock
+        td= holding.date
+        td= holding.qty
+        td= holding.price
+        td= (holding.age_months>=12 ? 'READY' : '') 

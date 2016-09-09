@@ -166,7 +166,7 @@ router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
     var viewModel = { year: snapshot.year(), holdings: [] },
       holdings = snapshot.holdings(),
       keys,
-      shortTermPoint = moment().subtract(1, 'years');
+      today = moment();
 
 
     keys = _(holdings).keys().filter(k => holdings[k].length > 0).value();
@@ -180,7 +180,7 @@ router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
             date: t.date.format('YYYY-MMM-DD'),
             qty: t.balance,
             price: t.price.toString(),
-            is_long_term: t.date.isBefore(shortTermPoint)
+            age_months: today.diff(t.date, 'months') 
           });
         log(t.stock + t.date.toISOString());
       })

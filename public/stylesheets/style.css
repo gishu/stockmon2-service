@@ -11,7 +11,10 @@ a {
   color: red;
   border: 1px dashed tomato;
 }
-
+.almost {
+  color: darkorange;
+  border: 1px dashed tomato;
+}
 .grid{
   width: 500px;
   height: 100%;
