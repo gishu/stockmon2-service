@@ -4,7 +4,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
 var accounts = require('./routes/accounts');
 
 var getDatabase = require('./src/dataMapper/Database.js');
@@ -28,7 +27,6 @@ app.use(bodyParser.text({ type: 'text/csv' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
 app.use('/accounts', accounts);
 
 // catch 404 and forward to error handler
