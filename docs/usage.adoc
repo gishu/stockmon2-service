@@ -1,0 +1,109 @@
+= Gishu's stock monitor
+Gishu Pillai
+:toc:
+
+== Create a new account
+
+----
+POST /accounts
+Form parameters
+name - account holder's name
+broker - HDFC/ZERO
+
+----
+.Response:
+Header: location contains `/accounts/newId`
+
+=== Adding new trades
+
+----
+PUT /accounts/[id]/trades
+Content-Type: text/csv
+
+Date,Stock,Qty,UnitPrice,Amt,Type,Notes
+2010-11-03,VOLTAS,50,255,12750.00,SOLD,
+2010-08-17,VOLTAS,,,200.00,DIV,
+2010-06-10,TATA ST,50,466,23300.00,X,,
+----
+
+=== Saving annual summary
+Saves all snapshots **till** given year ? Unintuitive ??
+----
+PUT /accounts/[id]/snapshots/[year]
+----
+
+.Response
+Http Status 201 - No Content
+
+
+== View an account
+
+=== See current holdings
+
+----
+GET /accounts/[id]/holdings
+----
+
+.Response
+CSV for download
+----
+Stock,Units,AveragePrice
+BLUE STAR,58,320
+CAN BANK,100,362
+----
+
+=== See annual summaries
+
+----
+GET /accounts/1/snapshots
+----
+
+.Response
+----
+Content-Type: application/json; charset=utf-8
+Content-Length: 998
+
+[{
+    "year": 2008,
+    "url": "/accounts/1/snapshots/2008",
+    "longTerm": "0",
+    "shortTerm": "0",
+    "dividends": "335"
+},
+...
+]
+----
+
+=== View gains for specific year (Tax Stmt)
+This is useful to fill my IT Returns
+----
+GET /accounts/1/snapshots/2016
+----
+
+.Response
+CSV Download of long/short term gains + dividends for the year
+
+----
+date,stock,cost_price,sale_price,units,brokerage,gain,ST
+2016-06-29,CENTURY,691,640,60,544.28,-3604.28,TAX
+2016-06-29,LIC,288,488.5,50,265.99,9759.01,
+2016-06-29,LIC,414.265,488.5,50,308.29,3403.46,
+2016-04-07,HDFC,,,,,120,
+2016-04-13,HIND ZINC,,,,,12000,
+----
+
+=== View closing balance for given year
+----
+GET /accounts/1/snapshots/2015/holdings
+----
+
+.Response
+HTML page listing holdings for this account
+
+=== Review trades
+----
+GET /accounts/[id]/trades
+----
+
+.Response
+HTML page with all trades indicating time to long-term status
