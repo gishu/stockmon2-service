@@ -5,6 +5,8 @@ var match = require('./BuyPicker.js');
 var make = require('./Trade.js');
 var makeNew = require('./Snapshot.js');
 
+var log = require('debug')('simulate');
+
 
 // simulation of trades to annual snapshots
 
@@ -39,6 +41,7 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, brokera
 
             callback(null, makeNew.snapshots(snapshots));
         } catch (err) {
+            log(err);
             callback(err, null);
         }
     }

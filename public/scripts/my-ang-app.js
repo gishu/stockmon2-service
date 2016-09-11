@@ -2,23 +2,23 @@
 
 var app = angular.module('myAngApp', ['ngTouch', 'ui.grid', 'myAngServices']);
 
-app.controller('MainCtrl', ['$scope', 'TradeService', function ($scope, tradesService) {
+app.controller('MainCtrl', ['$scope', 'TradeService', 'uiGridConstants', function ($scope, tradesService, gridConstants) {
     $scope.gridViewModel = {
         enableFiltering: true,
 
-        columndefs: [
-            { name: 'Date', field: 'date' },
+        columnDefs: [
+            { name: 'Date', field: 'date', sort: {direction: gridConstants.DESC, priority:0} },
             { name: 'Stock', field: 'stock' },
             { name: 'Qty', field: 'qty' },
             { name: 'Price', field: 'price' },
-            { name: 'Typo', field: 'type' }
+            { name: 'B/S', field: 'type' }
         ],
         data: []
     };
 
     tradesService.getTrades(1).then(trades => {
-        $scope.gridViewModel.data = trades;
+        $scope.gridViewModel.data = trades;  
     });
-    console.log('Grid data = ' + JSON.stringify($scope.gridViewModel.data));
+    
 }]);
 

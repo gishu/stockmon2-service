@@ -145,7 +145,8 @@ router.get('/:id/snapshots/:year(\\d{4})', (req, res) => {
     }
 
     var tmpFile = tmp.fileSync(CSV_OPTIONS),
-      ws = fs.createWriteStream(tmpFile.name);
+      ws = fs.createWriteStream(tmpFile.name),
+      year = _.toInteger(req.params.year);
 
     ws.on('finish', () => res.download(tmpFile.name, 'snapshot' + year + '.csv'));
     writeSnapshot(snapshot, ws);
@@ -239,11 +240,11 @@ router.get('/:id/trades', function (req, res, next) {
         log('Loaded account');
         var response = _.map(acc.trades(), t => {
           return {
-            'Date': t.date.format('YYYY-MM-DD'),
-            'Stock': t.stock,
-            'Qty': t.qty,
-            'Price': t.price,
-            'Type': t.is_buy ? 'BUY' : 'SELL'
+            'date': t.date.format('YYYY-MM-DD'),
+            'stock': t.stock,
+            'qty': t.qty,
+            'price': t.price,
+            'type': t.is_buy ? 'BUY' : 'SELL'
           };
         });
         res.json(response);
