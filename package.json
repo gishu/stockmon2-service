@@ -32,6 +32,6 @@
   "scripts": {
     "test": "node spec/jasmine_runner.js",
     "start": "node ./bin/www",
-    "postinstall": "mkdir -p public/ui-comp && cp -rv node_modules/angular* public/ui-comp && mkdir tmp"
+    "postinstall": "mkdir tmp"
   }
 }
