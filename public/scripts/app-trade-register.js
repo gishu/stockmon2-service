@@ -1,5 +1,5 @@
 
-var app = angular.module('myAngApp', ['ngTouch', 'ui.grid', 'myAngServices']);
+var app = angular.module('tradeRegisterApp', ['ngTouch', 'ui.grid', 'myAngServices']);
 
 app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'uiGridConstants',
     function ($scope, $location, tradesSvc, gridConstants) {

@@ -1,17 +1,12 @@
-doctype html
-html(ng-app='myAngApp')
-  head
-    script(src='http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.js')
-    script(src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-touch.js")
-    script(src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-animate.js")
-    
-    script(src='/ui-comp/angular-ui-grid/ui-grid.js')
-    link(rel='stylesheet', href='/ui-comp/angular-ui-grid/ui-grid.css')
+extends grid-layout
 
-    script(src='/scripts/my-ang-service.js')
-    script(src='/scripts/my-ang-app.js')
-    link(rel='stylesheet', href='/stylesheets/style.css')
+block specificScripts
+  script(src='/scripts/trade-service.js')
+  script(src='/scripts/stockquote-service.js')
+  script(src='/scripts/app-trade-register.js')
     
-  body
+block content
+  body(ng-app='tradeRegisterApp')
+    h1 Trade Register
     div(ng-controller='MainCtrl')
       div#my-ang-grid.grid(ui-grid='gridViewModel')

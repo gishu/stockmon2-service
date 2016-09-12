@@ -4,7 +4,8 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var accounts = require('./routes/accounts');
+var accounts = require('./routes/accounts'),
+ nseProxy = require('./routes/nse-proxy');
 
 var getDatabase = require('./src/dataMapper/Database.js');
 var getAccountMapper = require('./src/dataMapper/AccountMapper.js');
@@ -28,6 +29,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/accounts', accounts);
+app.use('/nseProxy', nseProxy);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

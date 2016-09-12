@@ -1,26 +1,14 @@
-extends layout
+extends grid-layout
+
+block specificScripts
+  script(src='/scripts/trade-service.js')
+  script(src='/scripts/stockquote-service.js')
+  script(src='/scripts/app-snapshot-holdings.js')
 
 block content
-  h1 Holdings for #{year}
+  body(ng-app='snapshotHoldingsApp')
+    h1 Holdings for #{year}
+    div(ng-controller='MainCtrl')
+      div#my-ang-grid.grid(ui-grid='gridViewModel')
 
-  table
-    tr
-      th Stock
-      th Balance
-      th Units
-      th Price
-      th Status
-    each holding in holdings
-      - 
-        var time_to_no_tax = null 
-        if (holding.age_months < 9)
-          time_to_no_tax = '3m+'
-        else if(holding.age_months < 12)
-          time_to_no_tax = '<3m'
-        
-      tr(class=time_to_no_tax ? (time_to_no_tax == '3m+' ? 'short' : 'almost'):null)
-        td= holding.stock
-        td= holding.date
-        td= holding.qty
-        td= holding.price
-        td= (holding.age_months>=12 ? 'READY' : '') 
+ 

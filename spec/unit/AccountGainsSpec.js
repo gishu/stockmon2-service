@@ -126,8 +126,6 @@ describe('Account', function () {
                 expect(snapshot.shortTermGains().toString()).toBe('5648.25');
                 expect(snapshot.netGain().toString()).toBe('4801.0125'); //TODO : Fix decimal places
 
-                //console.log(_.join(_.map(snapshot.gains(), g => g.isShortTerm +'|' + g.gain.toString()), ' - ' ));
-
                 snapshot = snapshots.shift();
                 expect(snapshot.year()).toBe(2014);
                 expect(snapshot.longTermGains().toString()).toBe('7284.79');

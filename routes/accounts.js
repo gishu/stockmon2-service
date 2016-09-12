@@ -133,7 +133,7 @@ router.get('/:id/snapshots', (req, res) => {
     });
 });
 
-router.get('/:id/snapshots/:year(\\d{4})', (req, res) => {
+router.get('/:id/snapshots/:year(\\d{4})/gains', (req, res) => {
   getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
     if (err) {
       res.sendStatus(500);
@@ -154,41 +154,49 @@ router.get('/:id/snapshots/:year(\\d{4})', (req, res) => {
 });
 
 router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
-  getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
-    if (err) {
-      res.sendStatus(500);
-      return;
-    }
-    if (!snapshot) {
-      res.sendStatus(404);
-      return;
-    }
+  res.format(
+    {
+      'text/html': () => res.render('holdings', { year: req.params.year }),
 
-    var viewModel = { year: snapshot.year(), holdings: [] },
-      holdings = snapshot.holdings(),
-      keys,
-      today = moment();
+      'application/json': () => {
+        getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
+          if (err) {
+            res.sendStatus(500);
+            return;
+          }
+          if (!snapshot) {
+            res.sendStatus(404);
+            return;
+          }
+
+          var viewModel = [],
+            holdings = snapshot.holdings(),
+            keys,
+            today = moment();
 
 
-    keys = _(holdings).keys().filter(k => holdings[k].length > 0).value();
-    keys.sort();
-    _.each(keys, stock => {
-      var trades = holdings[stock];
-      _.each(trades, t => {
-        viewModel.holdings.push(
-          {
-            stock: t.stock,
-            date: t.date.format('YYYY-MMM-DD'),
-            qty: t.balance,
-            price: t.price.toString(),
-            age_months: today.diff(t.date, 'months') 
+          keys = _(holdings).keys().filter(k => holdings[k].length > 0).value();
+          keys.sort();
+
+          _.each(keys, stock => {
+            var trades = holdings[stock];
+            viewModel = _.concat(viewModel, _.map(trades, t => {
+              return {
+                stock: t.stock,
+                date: t.date.format('YYYY-MMM-DD'),
+                qty: t.balance,
+                price: t.price,
+                age_months: today.diff(t.date, 'months')
+              };
+            }));
+
           });
-        log(t.stock + t.date.toISOString());
-      })
-    })
 
-    res.render('holdings', viewModel);
-  });
+          res.json(viewModel);
+        });
+      }
+    });
+
 });
 
 router.put('/:id/snapshots/:year(\\d{4})', (req, res) => {

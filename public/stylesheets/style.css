@@ -1,6 +1,6 @@
 body {
   padding: 16px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  font: 12px "Montserrat", Helvetica, Arial, sans-serif;
   height: 80vh;
 }
 
@@ -17,6 +17,9 @@ a {
   border: 1px dashed tomato;
 }
 .grid{
-  width: 500px;
+  width: 90vw;
   height: 90vh;
+}
+.money{
+  text-align: right;
 }

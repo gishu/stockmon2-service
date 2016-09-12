@@ -77,7 +77,7 @@ Content-Length: 998
 === View gains for specific year (Tax Stmt)
 This is useful to fill my IT Returns
 ----
-GET /accounts/1/snapshots/2016
+GET /accounts/1/snapshots/2016/gains
 ----
 
 .Response
