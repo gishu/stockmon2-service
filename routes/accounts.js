@@ -26,7 +26,12 @@ function createStringStream(str) {
   return s;
 }
 
-
+// create ./tmp folder for writing out temp csv files
+fs.access('./tmp', fs.constants.W_OK, err =>{
+  if (err && (err.code === "ENOENT")){
+    fs.mkdirSync('./tmp');
+  }
+});
 
 router.post('/', function (req, res) {
 
