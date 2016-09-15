@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var accounts = require('./routes/accounts'),
- nseProxy = require('./routes/nse-proxy');
+  nseProxy = require('./routes/nse-proxy');
 
 var getDatabase = require('./src/dataMapper/Database.js');
 var getAccountMapper = require('./src/dataMapper/AccountMapper.js');
