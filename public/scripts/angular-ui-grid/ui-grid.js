@@ -1,5 +1,5 @@
 /*!
- * ui-grid - v3.2.8 - 2016-09-09
+ * ui-grid - v3.2.6 - 2016-07-14
  * Copyright (c) 2016 ; License: MIT 
  */
 
@@ -10,15 +10,6 @@
 })();
 (function () {
   'use strict';
-
-  /**
-   * @ngdoc object
-   * @name ui.grid.service:uiGridConstants
-   * @description Constants for use across many grid features
-   *
-   */
-
-
   angular.module('ui.grid').constant('uiGridConstants', {
     LOG_DEBUG_MESSAGES: true,
     LOG_WARN_MESSAGES: true,
@@ -34,7 +25,6 @@
     APOS_REGEXP: /'/g,
     BRACKET_REGEXP: /^(.*)((?:\s*\[\s*\d+\s*\]\s*)|(?:\s*\[\s*"(?:[^"\\]|\\.)*"\s*\]\s*)|(?:\s*\[\s*'(?:[^'\\]|\\.)*'\s*\]\s*))(.*)$/,
     COL_CLASS_PREFIX: 'ui-grid-col',
-    ENTITY_BINDING: '$$this',
     events: {
       GRID_SCROLL: 'uiGridScroll',
       COLUMN_MENU_SHOWN: 'uiGridColMenuShown',
@@ -82,52 +72,8 @@
       F11: 122,
       F12: 123
     },
-     /**
-     * @ngdoc object
-     * @name ASC
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Used in {@link ui.grid.class:GridOptions.columnDef#properties_sort columnDef.sort} and
-     * {@link ui.grid.class:GridOptions.columnDef#properties_sortDirectionCycle columnDef.sortDirectionCycle}
-     * to configure the sorting direction of the column
-     */
     ASC: 'asc',
-     /**
-     * @ngdoc object
-     * @name DESC
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Used in {@link ui.grid.class:GridOptions.columnDef#properties_sort columnDef.sort} and
-     * {@link ui.grid.class:GridOptions.columnDef#properties_sortDirectionCycle columnDef.sortDirectionCycle}
-     * to configure the sorting direction of the column
-     */
     DESC: 'desc',
-
-
-     /**
-     * @ngdoc object
-     * @name filter
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Used in {@link ui.grid.class:GridOptions.columnDef#properties_filter columnDef.filter}
-     * to configure filtering on the column
-     *
-     * `SELECT` and `INPUT` are used with the `type` property of the filter, the rest are used to specify
-     * one of the built-in conditions.
-     *
-     * Available `condition` options are:
-     * - `uiGridConstants.filter.STARTS_WITH`
-     * - `uiGridConstants.filter.ENDS_WITH`
-     * - `uiGridConstants.filter.CONTAINS`
-     * - `uiGridConstants.filter.GREATER_THAN`
-     * - `uiGridConstants.filter.GREATER_THAN_OR_EQUAL`
-     * - `uiGridConstants.filter.LESS_THAN`
-     * - `uiGridConstants.filter.LESS_THAN_OR_EQUAL`
-     * - `uiGridConstants.filter.NOT_EQUAL`
-     * - `uiGridConstants.filter.STARTS_WITH`
-     *
-     *
-     * Available `type` options are:
-     * - `uiGridConstants.filter.SELECT` - use a dropdown box for the cell header filter field
-     * - `uiGridConstants.filter.INPUT` - use a text box for the cell header filter field
-     */
     filter: {
       STARTS_WITH: 2,
       ENDS_WITH: 4,
@@ -142,20 +88,6 @@
       INPUT: 'input'
     },
 
-    /**
-     * @ngdoc object
-     * @name aggregationTypes
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Used in {@link ui.grid.class:GridOptions.columnDef#properties_aggregationType columnDef.aggregationType}
-     * to specify the type of built-in aggregation the column should use.
-     *
-     * Available options are:
-     * - `uiGridConstants.aggregationTypes.sum` - add the values in this column to produce the aggregated value
-     * - `uiGridConstants.aggregationTypes.count` - count the number of rows to produce the aggregated value
-     * - `uiGridConstants.aggregationTypes.avg` - average the values in this column to produce the aggregated value
-     * - `uiGridConstants.aggregationTypes.min` - use the minimum value in this column as the aggregated value
-     * - `uiGridConstants.aggregationTypes.max` - use the maximum value in this column as the aggregated value
-     */
     aggregationTypes: {
       sum: 2,
       count: 4,
@@ -167,20 +99,6 @@
     // TODO(c0bra): Create full list of these somehow. NOTE: do any allow a space before or after them?
     CURRENCY_SYMBOLS: ['ƒ', '$', '£', '$', '¤', '¥', '៛', '₩', '₱', '฿', '₫'],
 
-    /**
-     * @ngdoc object
-     * @name scrollDirection
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Set on {@link ui.grid.class:Grid#properties_scrollDirection Grid.scrollDirection},
-     * to indicate the direction the grid is currently scrolling in
-     *
-     * Available options are:
-     * - `uiGridConstants.scrollDirection.UP` - set when the grid is scrolling up
-     * - `uiGridConstants.scrollDirection.DOWN` - set when the grid is scrolling down
-     * - `uiGridConstants.scrollDirection.LEFT` - set when the grid is scrolling left
-     * - `uiGridConstants.scrollDirection.RIGHT` - set when the grid is scrolling right
-     * - `uiGridConstants.scrollDirection.NONE` - set when the grid is not scrolling, this is the default
-     */
     scrollDirection: {
       UP: 'up',
       DOWN: 'down',
@@ -190,22 +108,6 @@
 
     },
 
-    /**
-     * @ngdoc object
-     * @name dataChange
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Used with {@link ui.grid.core.api:PublicApi#methods_notifyDataChange PublicApi.notifyDataChange},
-     * {@link ui.grid.class:Grid#methods_callDataChangeCallbacks Grid.callDataChangeCallbacks},
-     * and {@link ui.grid.class:Grid#methods_registerDataChangeCallback Grid.registerDataChangeCallback}
-     * to specify the type of the event(s).
-     *
-     * Available options are:
-     * - `uiGridConstants.dataChange.ALL` - listeners fired on any of these events, fires listeners on all events.
-     * - `uiGridConstants.dataChange.EDIT` - fired when the data in a cell is edited
-     * - `uiGridConstants.dataChange.ROW` - fired when a row is added or removed
-     * - `uiGridConstants.dataChange.COLUMN` - fired when the column definitions are modified
-     * - `uiGridConstants.dataChange.OPTIONS` - fired when the grid options are modified
-     */
     dataChange: {
       ALL: 'all',
       EDIT: 'edit',
@@ -213,20 +115,6 @@
       COLUMN: 'column',
       OPTIONS: 'options'
     },
-
-    /**
-     * @ngdoc object
-     * @name scrollbars
-     * @propertyOf ui.grid.service:uiGridConstants
-     * @description Used with {@link ui.grid.class:GridOptions#properties_enableHorizontalScrollbar GridOptions.enableHorizontalScrollbar}
-     * and {@link ui.grid.class:GridOptions#properties_enableVerticalScrollbar GridOptions.enableVerticalScrollbar}
-     * to specify the scrollbar policy for that direction.
-     *
-     * Available options are:
-     * - `uiGridConstants.scrollbars.NEVER` - never show scrollbars in this direction
-     * - `uiGridConstants.scrollbars.ALWAYS` - always show scrollbars in this direction
-     */
-
     scrollbars: {
       NEVER: 0,
       ALWAYS: 1
@@ -235,7 +123,6 @@
   });
 
 })();
-
 angular.module('ui.grid').directive('uiGridCell', ['$compile', '$parse', 'gridUtil', 'uiGridConstants', function ($compile, $parse, gridUtil, uiGridConstants) {
   var uiGridCell = {
     priority: 0,
@@ -3798,9 +3685,8 @@ angular.module('ui.grid')
      * @ngdoc property
      * @name scrollDirection
      * @propertyOf ui.grid.class:Grid
-     * @description set one of the {@link ui.grid.service:uiGridConstants#properties_scrollDirection uiGridConstants.scrollDirection}
-     *  values (UP, DOWN, LEFT, RIGHT, NONE), which tells us which direction we are scrolling.
-     * Set to NONE via debounced method
+     * @description set one of the uiGridConstants.scrollDirection values (UP, DOWN, LEFT, RIGHT, NONE), which tells
+     * us which direction we are scrolling. Set to NONE via debounced method
      */
     self.scrollDirection = uiGridConstants.scrollDirection.NONE;
 
@@ -4101,8 +3987,8 @@ angular.module('ui.grid')
      * and you'd like cell classes to be re-evaluated, or changed config within
      * the columnDef and you'd like headerCellClasses to be re-evaluated.
      * @param {string} type one of the
-     * {@link ui.grid.service:uiGridConstants#properties_dataChange uiGridConstants.dataChange}
-     * values (ALL, ROW, EDIT, COLUMN), which tells us which refreshes to fire.
+     * uiGridConstants.dataChange values (ALL, ROW, EDIT, COLUMN), which tells
+     * us which refreshes to fire.
      *
      */
     self.api.registerMethod( 'core', 'notifyDataChange', this.notifyDataChange );
@@ -4234,8 +4120,8 @@ angular.module('ui.grid')
    *
    * @param {function(grid)} callback function to be called
    * @param {array} types the types of data change you want to be informed of.  Values from
-   * the {@link ui.grid.service:uiGridConstants#properties_dataChange uiGridConstants.dataChange}
-   *  values ( ALL, EDIT, ROW, COLUMN, OPTIONS ).  Optional and defaults to ALL
+   * the uiGridConstants.dataChange values ( ALL, EDIT, ROW, COLUMN, OPTIONS ).  Optional and defaults to
+   * ALL
    * @returns {function} deregister function - a function that can be called to deregister this callback
    */
   Grid.prototype.registerDataChangeCallback = function registerDataChangeCallback(callback, types, _this) {
@@ -4262,9 +4148,8 @@ angular.module('ui.grid')
    * @description Calls the callbacks based on the type of data change that
    * has occurred. Always calls the ALL callbacks, calls the ROW, EDIT, COLUMN and OPTIONS callbacks if the
    * event type is matching, or if the type is ALL.
-   * @param {string} type the type of event that occurred - one of the
-   * {@link ui.grid.service:uiGridConstants#properties_dataChange uiGridConstants.dataChange}
-   *  values (ALL, ROW, EDIT, COLUMN, OPTIONS)
+   * @param {number} type the type of event that occurred - one of the
+   * uiGridConstants.dataChange values (ALL, ROW, EDIT, COLUMN, OPTIONS)
    */
   Grid.prototype.callDataChangeCallbacks = function callDataChangeCallbacks(type, options) {
     angular.forEach( this.dataChangeCallbacks, function( callback, uid ){
@@ -4633,11 +4518,7 @@ angular.module('ui.grid')
    * @param {GridColumn} col col object
    */
   Grid.prototype.getQualifiedColField = function (col) {
-    var base = 'row.entity';
-    if ( col.field === uiGridConstants.ENTITY_BINDING ) {
-      return base;
-    }
-    return gridUtil.preEval(base + '.' + col.field);
+    return 'row.entity.' + gridUtil.preEval(col.field);
   };
 
   /**
@@ -5663,7 +5544,7 @@ angular.module('ui.grid')
       // Get the actual priority since there may be columns which have suppressRemoveSort set
       column.sort.priority = self.getNextColumnSortPriority();
     }
-    else if (column.sort.priority === undefined){
+    else if (!column.sort.priority){
       column.sort.priority = self.getNextColumnSortPriority();
     }
 
@@ -5681,7 +5562,7 @@ angular.module('ui.grid')
       if (column.sortDirectionCycle[i]) {
         column.sort.direction = column.sortDirectionCycle[i];
       } else {
-        removeSortOfColumn(column, self);
+        column.sort = {};
       }
     }
     else {
@@ -5691,18 +5572,6 @@ angular.module('ui.grid')
     self.api.core.raise.sortChanged( self, self.getColumnSorting() );
 
     return $q.when(column);
-  };
-
-  var removeSortOfColumn = function removeSortOfColumn(column, grid) {
-    //Decrease priority for every col where priority is higher than the removed sort's priority.
-    grid.columns.forEach(function (col) {
-      if (col.sort && col.sort.priority !== undefined && col.sort.priority > column.sort.priority) {
-        col.sort.priority -= 1;
-      }
-    });
-
-    //Remove sort
-    column.sort = {};
   };
 
   /**
@@ -6703,8 +6572,6 @@ angular.module('ui.grid')
    * @name filter
    * @propertyOf ui.grid.class:GridColumn
    * @description Filter on this column.
-   *
-   * Available built-in conditions and types are listed under {@link jui.grid.service:uiGridConstants#properties_filter uiGridOptions.filter}
    * @example
    * <pre>{ term: 'text', condition: uiGridConstants.filter.STARTS_WITH, placeholder: 'type to filter...', ariaLabel: 'Filter for text', flags: { caseSensitive: false }, type: uiGridConstants.filter.SELECT, [ { value: 1, label: 'male' }, { value: 2, label: 'female' } ] }</pre>
    *
@@ -6740,9 +6607,7 @@ angular.module('ui.grid')
        * @name aggregationType
        * @propertyOf ui.grid.class:GridOptions.columnDef
        * @description The aggregation that you'd like to show in the columnFooter for this
-       * column.  Valid values are in
-       * {@link ui.grid.service:uiGridConstants#properties_aggregationTypes uiGridConstants.aggregationTypes},
-       * and currently include `uiGridConstants.aggregationTypes.count`,
+       * column.  Valid values are in uiGridConstants, and currently include `uiGridConstants.aggregationTypes.count`,
        * `uiGridConstants.aggregationTypes.sum`, `uiGridConstants.aggregationTypes.avg`, `uiGridConstants.aggregationTypes.min`,
        * `uiGridConstants.aggregationTypes.max`.
        *
@@ -6910,8 +6775,7 @@ angular.module('ui.grid')
   * @propertyOf ui.grid.class:GridOptions.columnDef
   * @description An object of sort information, attributes are:
   *
-  * - direction: values are {@link ui.grid.service:uiGridConstants#properties_ASC uiGridConstants.ASC}
-  *  or {@link ui.grid.service:uiGridConstants#properties_DESC uiGridConstants.DESC}
+  * - direction: values are uiGridConstants.ASC or uiGridConstants.DESC
   * - ignoreSort: if set to true this sort is ignored (used by tree to manipulate the sort functionality)
   * - priority: says what order to sort the columns in (lower priority gets sorted first).
   * @example
@@ -7280,8 +7144,8 @@ angular.module('ui.grid')
      * @ngdoc property
      * @name sortDirectionCycle
      * @propertyOf ui.grid.class:GridOptions.columnDef
-     * @description (optional) An array of {@link ui.grid.service:uiGridConstants#properties_ASC sort directions},
-     * specifying the order that they should cycle through as the user repeatedly clicks on the column heading.
+     * @description (optional) An array of sort directions, specifying the order that they
+     * should cycle through as the user repeatedly clicks on the column heading.
      * The default is `[null, uiGridConstants.ASC, uiGridConstants.DESC]`. Null
      * refers to the unsorted state. This does not affect the initial sort
      * direction; use the {@link ui.grid.class:GridOptions.columnDef#sort sort}
@@ -7359,8 +7223,7 @@ angular.module('ui.grid')
      * A filter consists of a condition, a term, and a placeholder:
      *
      * - condition defines how rows are chosen as matching the filter term. This can be set to
-     * one of the constants in {@link ui.grid.service:uiGridConstants#properties_filter uiGridConstants.filter},
-     * or you can supply a custom filter function
+     * one of the constants in uiGridConstants.filter, or you can supply a custom filter function
      * that gets passed the following arguments: [searchTerm, cellValue, row, column].
      * - term: If set, the filter field will be pre-populated
      * with this value.
@@ -7370,8 +7233,7 @@ angular.module('ui.grid')
      * your custom function doesn't require a term (so it can run even when the term is null)
      * - flags: only flag currently available is `caseSensitive`, set to false if you don't want
      * case sensitive matching
-     * - type: defaults to {@link ui.grid.service:uiGridConstants#properties_filter uiGridConstants.filter.INPUT},
-     * which gives a text box.  If set to {@link ui.grid.service:uiGridConstants#properties_filter uiGridConstants.filter.SELECT}
+     * - type: defaults to uiGridConstants.filter.INPUT, which gives a text box.  If set to uiGridConstants.filter.SELECT
      * then a select box will be shown with options selectOptions
      * - selectOptions: options in the format `[ { value: 1, label: 'male' }]`.  No i18n filter is provided, you need
      * to perform the i18n on the values before you provide them
@@ -7977,8 +7839,7 @@ angular.module('ui.grid')
        * @ngdoc boolean
        * @name enableVerticalScrollbar
        * @propertyOf ui.grid.class:GridOptions
-       * @description {@link ui.grid.service:uiGridConstants#properties_scrollbars uiGridConstants.scrollbars.ALWAYS} by default.
-       * This settings controls the vertical scrollbar for the grid.
+       * @description uiGridConstants.scrollbars.ALWAYS by default. This settings controls the vertical scrollbar for the grid.
        * Supported values: uiGridConstants.scrollbars.ALWAYS, uiGridConstants.scrollbars.NEVER
        */
       baseOptions.enableVerticalScrollbar = typeof(baseOptions.enableVerticalScrollbar) !== "undefined" ? baseOptions.enableVerticalScrollbar : uiGridConstants.scrollbars.ALWAYS;
@@ -7987,8 +7848,7 @@ angular.module('ui.grid')
        * @ngdoc boolean
        * @name enableHorizontalScrollbar
        * @propertyOf ui.grid.class:GridOptions
-       * @description {@link ui.grid.service:uiGridConstants#properties_scrollbars uiGridConstants.scrollbars.ALWAYS} by default.
-       * This settings controls the horizontal scrollbar for the grid.
+       * @description uiGridConstants.scrollbars.ALWAYS by default. This settings controls the horizontal scrollbar for the grid.
        * Supported values: uiGridConstants.scrollbars.ALWAYS, uiGridConstants.scrollbars.NEVER
        */
       baseOptions.enableHorizontalScrollbar = typeof(baseOptions.enableHorizontalScrollbar) !== "undefined" ? baseOptions.enableHorizontalScrollbar : uiGridConstants.scrollbars.ALWAYS;
@@ -8895,7 +8755,7 @@ angular.module('ui.grid')
 (function(){
 
 angular.module('ui.grid')
-.factory('GridRow', ['gridUtil', 'uiGridConstants', function(gridUtil, uiGridConstants) {
+.factory('GridRow', ['gridUtil', function(gridUtil) {
 
    /**
    * @ngdoc function
@@ -8988,11 +8848,7 @@ angular.module('ui.grid')
      * @returns {string} resulting name that can be evaluated against a row
      */
   GridRow.prototype.getEntityQualifiedColField = function(col) {
-    var base = 'entity';
-    if ( col.field === uiGridConstants.ENTITY_BINDING ) {
-      return base;
-    }
-    return gridUtil.preEval(base + '.' + col.field);
+    return gridUtil.preEval('entity.' + col.field);
   };
   
   
@@ -9679,10 +9535,10 @@ module.service('rowSearcher', ['gridUtil', 'uiGridConstants', function (gridUtil
         }
     
         if ( !gridUtil.isNullOrUndefined(filter.term) ){
-          // it is possible to have noTerm.
+          // it is possible to have noTerm.  We don't need to copy that across, it was just a flag to avoid
+          // getting the filter ignored if the filter was a function that didn't use a term
           newFilter.term = rowSearcher.stripTerm(filter);
         }
-        newFilter.noTerm = filter.noTerm;
         
         if ( filter.condition ){
           newFilter.condition = filter.condition;
@@ -9951,8 +9807,8 @@ var module = angular.module('ui.grid');
 
 /**
  * @ngdoc object
- * @name ui.grid.class:rowSorter
- * @description rowSorter provides the default sorting mechanisms,
+ * @name ui.grid.class:RowSorter
+ * @description RowSorter provides the default sorting mechanisms,
  * including guessing column types and applying appropriate sort
  * algorithms
  *
@@ -9979,7 +9835,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name guessSortFn
    * @description Assigns a sort function to use based on the itemType in the column
    * @param {string} itemType one of 'number', 'boolean', 'string', 'date', 'object'.  And
@@ -10008,7 +9864,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name handleNulls
    * @description Sorts nulls and undefined to the bottom (top when
    * descending).  Called by each of the internal sorters before
@@ -10039,7 +9895,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name basicSort
    * @description Sorts any values that provide the < method, including strings
    * or numbers.  Handles nulls and undefined through calling handleNulls
@@ -10065,7 +9921,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name sortNumber
    * @description Sorts numerical values.  Handles nulls and undefined through calling handleNulls
    * @param {object} a sort value a
@@ -10084,7 +9940,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name sortNumberStr
    * @description Sorts numerical values that are stored in a string (i.e. parses them to numbers first).
    * Handles nulls and undefined through calling handleNulls
@@ -10138,7 +9994,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name sortAlpha
    * @description Sorts string values. Handles nulls and undefined through calling handleNulls
    * @param {object} a sort value a
@@ -10160,7 +10016,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name sortDate
    * @description Sorts date values. Handles nulls and undefined through calling handleNulls.
    * Handles date strings by converting to Date object if not already an instance of Date
@@ -10189,7 +10045,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name sortBool
    * @description Sorts boolean values, true is considered larger than false.
    * Handles nulls and undefined through calling handleNulls
@@ -10218,7 +10074,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name getSortFn
    * @description Get the sort function for the column.  Looks first in
    * rowSorter.colSortFnCache using the column name, failing that it
@@ -10278,7 +10134,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
 
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name prioritySort
    * @description Used where multiple columns are present in the sort criteria,
    * we determine which column should take precedence in the sort by sorting
@@ -10331,7 +10187,7 @@ module.service('rowSorter', ['$parse', 'uiGridConstants', function ($parse, uiGr
    */
   /**
    * @ngdoc method
-   * @methodOf ui.grid.class:rowSorter
+   * @methodOf ui.grid.class:RowSorter
    * @name sort
    * @description sorts the grid
    * @param {Object} grid the grid itself
@@ -12023,19 +11879,6 @@ module.filter('px', function() {
           invalidCsv: 'File was unable to be processed, is it valid CSV?',
           invalidJson: 'File was unable to be processed, is it valid Json?',
           jsonNotArray: 'Imported json file must contain an array, aborting.'
-        },
-        pagination: {
-          aria: {
-            pageToFirst: 'Gå til første',
-            pageBack: 'Gå tilbage',
-            pageSelected: 'Valgte side',
-            pageForward: 'Gå frem',
-            pageToLast: 'Gå til sidste'
-          },
-          sizes: 'genstande per side',
-          totalItems: 'genstande',
-          through: 'gennem',
-          of: 'af'
         }
       });
       return $delegate;
@@ -12506,15 +12349,6 @@ module.filter('px', function() {
   angular.module('ui.grid').config(['$provide', function($provide) {
     $provide.decorator('i18nService', ['$delegate', function($delegate) {
       $delegate.add('fr', {
-        headerCell: {
-          aria: {
-            defaultFilterLabel: 'Filtre de la colonne',
-            removeFilter: 'Supprimer le filtre',
-            columnMenuButtonLabel: 'Menu de la colonne'
-          },
-          priority: 'Priorité:',
-          filterLabel: "Filtre de la colonne: "
-        },
         aggregate: {
           label: 'éléments'
         },
@@ -12538,7 +12372,6 @@ module.filter('px', function() {
         sort: {
           ascending: 'Trier par ordre croissant',
           descending: 'Trier par ordre décroissant',
-          none: 'Aucun tri',
           remove: 'Enlever le tri'
         },
         column: {
@@ -12556,13 +12389,7 @@ module.filter('px', function() {
           pinRight: 'Épingler à droite',
           unpin: 'Détacher'
         },
-        columnMenu: {
-          close: 'Fermer'
-        },
         gridMenu: {
-          aria: {
-            buttonLabel: 'Menu du tableau'
-          },
           columns: 'Colonnes:',
           importerTitle: 'Importer un fichier',
           exporterAllAsCsv: 'Exporter toutes les données en CSV',
@@ -12581,33 +12408,19 @@ module.filter('px', function() {
           jsonNotArray: 'Le fichier JSON importé doit contenir un tableau, abandon.'
         },
         pagination: {
-          aria: {
-            pageToFirst: 'Aller à la première page',
-            pageBack: 'Page précédente',
-            pageSelected: 'Page sélectionnée',
-            pageForward: 'Page suivante',
-            pageToLast: 'Aller à la dernière page'
-          },
           sizes: 'éléments par page',
           totalItems: 'éléments',
-          through: 'à',
           of: 'sur'
         },
         grouping: {
           group: 'Grouper',
           ungroup: 'Dégrouper',
-          aggregate_count: 'Agg: Compter',
+          aggregate_count: 'Agg: Compte',
           aggregate_sum: 'Agg: Somme',
           aggregate_max: 'Agg: Max',
           aggregate_min: 'Agg: Min',
           aggregate_avg: 'Agg: Moy',
           aggregate_remove: 'Agg: Retirer'
-        },
-        validate: {
-          error: 'Erreur:',
-          minLength: 'La valeur doit être supérieure ou égale à THRESHOLD caractères.',
-          maxLength: 'La valeur doit être inférieure ou égale à THRESHOLD caractères.',
-          required: 'Une valeur est nécéssaire.'
         }
       });
       return $delegate;
@@ -12807,19 +12620,6 @@ module.filter('px', function() {
           invalidCsv: 'Impossibile elaborare il file, sicuro che sia un CSV?',
           invalidJson: 'Impossibile elaborare il file, sicuro che sia un JSON valido?',
           jsonNotArray: 'Errore! Il file JSON da importare deve contenere un array.'
-        },
-        pagination: {
-          aria: {
-            pageToFirst: 'Prima',
-            pageBack: 'Indietro',
-            pageSelected: 'Pagina selezionata',
-            pageForward: 'Avanti',
-            pageToLast: 'Ultima'
-          },
-          sizes: 'elementi per pagina',
-          totalItems: 'elementi',
-          through: 'a',
-          of: 'di'
         },
         grouping: {
           group: 'Raggruppa',
@@ -16556,18 +16356,20 @@ module.filter('px', function() {
                 return;
               }
 
-              var modelField = $scope.row.getQualifiedColField($scope.col);
-              if ($scope.col.colDef.editModelField) {
-                modelField = gridUtil.preEval('row.entity.' + $scope.col.colDef.editModelField);
-              }
 
-              cellModel = $parse(modelField);
-
+              cellModel = $parse($scope.row.getQualifiedColField($scope.col));
               //get original value from the cell
               origCellValue = cellModel($scope);
 
               html = $scope.col.editableCellTemplate;
-              html = html.replace(uiGridConstants.MODEL_COL_FIELD, modelField);
+
+              if ($scope.col.colDef.editModelField) {
+                html = html.replace(uiGridConstants.MODEL_COL_FIELD, gridUtil.preEval('row.entity.' + $scope.col.colDef.editModelField));
+              }
+              else {
+                html = html.replace(uiGridConstants.MODEL_COL_FIELD, $scope.row.getQualifiedColField($scope.col));
+              }
+
               html = html.replace(uiGridConstants.COL_FIELD, 'grid.getCellValue(row, col)');
 
               var optionFilter = $scope.col.colDef.editDropdownFilter ? '|' + $scope.col.colDef.editDropdownFilter : '';
@@ -18478,7 +18280,7 @@ module.filter('px', function() {
 
         /**
          * @ngdoc function
-         * @name formatAsCsv
+         * @name formatAsCSV
          * @methodOf  ui.grid.exporter.service:uiGridExporterService
          * @description Formats the column headers and data as a CSV,
          * and sends that data to the user
@@ -21833,7 +21635,7 @@ module.filter('px', function() {
                     gridLeft += $scope.grid.renderContainers.left.header[0].getBoundingClientRect().width;
                   }
 
-                  previousMouseX = event.pageX || (event.originalEvent ? event.originalEvent.pageX : 0);
+                  previousMouseX = event.pageX;
                   totalMouseMovement = 0;
                   rightMoveLimit = gridLeft + $scope.grid.getViewportWidth();
 
@@ -21847,8 +21649,7 @@ module.filter('px', function() {
                 };
 
                 var moveFn = function( event ) {
-                  var pageX = event.pageX || (event.originalEvent ? event.originalEvent.pageX : 0);
-                  var changeValue = pageX - previousMouseX;
+                  var changeValue = event.pageX - previousMouseX;
                   if ( changeValue === 0 ){ return; }
                   //Disable text selection in Chrome during column move
                   document.onselectstart = function() { return false; };
@@ -21860,7 +21661,7 @@ module.filter('px', function() {
                   }
                   else if (elmCloned) {
                     moveElement(changeValue);
-                    previousMouseX = pageX;
+                    previousMouseX = event.pageX;
                   }
                 };
 
@@ -28069,21 +27870,16 @@ module.filter('px', function() {
           };
         };
 
-        var promises = [];
-
         for (var validatorName in colDef.validators) {
           service.clearError(rowEntity, colDef, validatorName);
           var msg;
           var validatorFunction = service.getValidator(validatorName, colDef.validators[validatorName]);
           // We pass the arguments as oldValue, newValue so they are in the same order 
           // as ng-model validators (modelValue, viewValue)
-          var promise = $q
-                        .when(validatorFunction(oldValue, newValue, rowEntity, colDef))
-                        .then(validateClosureFactory(rowEntity, colDef, validatorName));
-          promises.push(promise);
+          $q.when(validatorFunction(oldValue, newValue, rowEntity, colDef))
+            .then(validateClosureFactory(rowEntity, colDef, validatorName)
+          );
         }
-        
-        return $q.all(promises);
       },
 
       /**
@@ -28295,7 +28091,6 @@ module.filter('px', function() {
     };
   }]);
 })();
-
 angular.module('ui.grid').run(['$templateCache', function($templateCache) {
   'use strict';
 
