@@ -1,5 +1,5 @@
 
-var app = angular.module('snapshotHoldingsApp', ['ngTouch', 'ui.grid', 'myAngServices']);
+var app = angular.module('snapshotHoldingsApp', ['ngTouch', 'ui.grid', 'ui.grid.exporter', 'myAngServices']);
 
 app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteService', 'uiGridConstants',
     function ($scope, $location, tradesSvc, quoteSvc, gridConstants) {
@@ -16,6 +16,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
 
         $scope.gridViewModel = {
             enableFiltering: true,
+            enableGridMenu: true,
+            exporterCsvFilename: 'snapshotHoldings.csv',
 
             columnDefs: [
                 {

@@ -1,10 +1,13 @@
 
-var app = angular.module('tradeRegisterApp', ['ngTouch', 'ui.grid', 'myAngServices']);
+var app = angular.module('tradeRegisterApp', ['ngTouch', 'ui.grid', 'ui.grid.exporter', 'myAngServices']);
 
 app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'uiGridConstants',
     function ($scope, $location, tradesSvc, gridConstants) {
         $scope.gridViewModel = {
             enableFiltering: true,
+            enableGridMenu: true,
+            exporterCsvFilename: 'trades.csv',
+
 
             columnDefs: [
                 { name: 'Date', field: 'date', sort: { direction: gridConstants.DESC, priority: 0 } },
