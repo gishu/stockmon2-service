@@ -27,7 +27,7 @@ function createStringStream(str) {
 }
 
 // create ./tmp folder for writing out temp csv files
-fs.access('./tmp', fs.constants.W_OK, err =>{
+fs.access('./tmp', fs.W_OK, err =>{
   if (err && (err.code === "ENOENT")){
     fs.mkdirSync('./tmp');
   }
