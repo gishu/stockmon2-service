@@ -1,5 +1,4 @@
 var _ = require('lodash');
-var BigNumber = require('bignumber.js');
 var make = require('./Trade.js');
 var log = require('debug')('parser');
 
@@ -10,7 +9,7 @@ function parse(csvStream, callback) {
         dividends = new Array();
 
     csvStream.pipe(parse(parse_options, function (err, data) {
-        var looper = 0, price, qty, record;
+        var looper = 0, qty, record;
 
         if (err) {
             callback(err, null);
@@ -21,16 +20,16 @@ function parse(csvStream, callback) {
                 record = data[looper];
                 if (record['Date'] && record['Stock']) {
                     if (record['Type'] === 'DIV') {
-                        dividends.push(make.makeDividend(record['Date'], record['Stock'], record['Amt'].replace(',', ''), record['Notes']));
+                        dividends.push(make.makeDividend(record['Date'], record['Stock'], record['Amt'], record['Notes']));
                     }
                     else {
-                        price = new BigNumber(record['UnitPrice'].replace(',', ''));
+                        
                         qty = parseInt(record['Qty']);
                         if (record['Type'] != 'SOLD') {
-                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, price, record['Notes']));
+                            trades.push(make.makeBuy(record['Date'], record['Stock'], qty, record['UnitPrice'], record['Brokerage'], record['Notes']));
                         }
                         else {
-                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, price, record['Notes']));
+                            trades.push(make.makeSale(record['Date'], record['Stock'], qty, record['UnitPrice'], record['Brokerage'], record['Notes']));
                         }
                     }
                 }

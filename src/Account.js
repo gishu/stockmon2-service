@@ -1,12 +1,10 @@
 var _ = require('lodash');
 var util = require('util');
-var BigNumber = require('bignumber.js');
+var BigNumber = require('./util/bignumber_std.js');
 var log = require('debug')('account');
 
 var simulate = require('./Simulation.js');
 var brokerRegistry = require('./brokerRegistry.js');
-
-BigNumber.config({ DECIMAL_PLACES: 2 });
 
 function create(name, broker) {
     var _nextId = -1,
@@ -62,10 +60,7 @@ function create(name, broker) {
                 thisTrade.id = thisTrade.id || _nextId--;
                 _trades.push(thisTrade);
                 _mapStockToQty[trade.stock] = _mapStockToQty[trade.stock] || 0;
-                if (!thisTrade.brokerage) {
-                    brokerageCalc = brokerRegistry.getBrokerageCalc(_broker);
-                    thisTrade.brokerage = brokerageCalc(thisTrade.qty, thisTrade.price, thisTrade.is_buy);
-                }
+                
                 if (trade.is_buy) {
                     thisTrade.balance = trade.qty;
 
@@ -99,7 +94,7 @@ function create(name, broker) {
     }
 
     function getHoldings(callback) {
-        simulate(_holdings, _trades, _dividends, brokerRegistry.getBrokerageCalc(_broker), (err, snapshots) => {
+        simulate(_holdings, _trades, _dividends, (err, snapshots) => {
             if (err) {
                 log('Simulation failed with ' + err.stack);
                 callback(err, null);
@@ -125,7 +120,7 @@ function create(name, broker) {
         });
     }
     function getAnnualStmts(callback) {
-        return simulate(_holdings, _trades, _dividends, brokerRegistry.getBrokerageCalc(_broker), callback);
+        return simulate(_holdings, _trades, _dividends, callback);
     }
 
     function getId() { return _id; }

@@ -126,7 +126,8 @@ router.get('/:id/snapshots', (req, res) => {
             url: '/accounts' + req.url + '/' + s.year(),
             longTerm: s.longTermGains(),
             shortTerm: s.shortTermGains(),
-            dividends: _.reduce(s.dividends(), (sum, d) => sum.plus(d.amount), new BigNumber(0))
+            dividends: _.reduce(s.dividends(), (sum, d) => sum.plus(d.amount), new BigNumber(0)),
+            net: s.netGain().toFixed(2)
           };
         });
         res.json(peeks);

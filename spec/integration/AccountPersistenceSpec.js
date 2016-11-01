@@ -1,4 +1,4 @@
-describe('Account', function () {
+describe('Account (persistence)', function () {
 
     var path = require('path');
     var async = require('async');
@@ -72,13 +72,13 @@ describe('Account', function () {
                     expect(divs.length).toEqual(4);
                     gain = _.last(divs);
                     expect(gain.stock).toEqual('SBI');
-                    expect(gain.amount.toString()).toEqual('90');
+                    expect(gain.amount).toBeWorth('90.00');
 
                     snapshot = snapshots.forYear(2009);
                     expect(snapshot.gains().length).toEqual(2);
                     gain = _.last(snapshot.gains());
                     expect(gain.stock).toEqual('HDFCBANK');
-                    expect(gain.gain.toString()).toEqual('5590.46');
+                    expect(gain.gain).toBeWorth('5590.46');
 
                     done();
                 });
@@ -103,9 +103,9 @@ describe('Account', function () {
                 });
             },
             (acc, cb) => {
-                var trades = [make.makeBuy('2014-05-14', 'TATA MOTORS', 20, '570', '123.45', 'NEW'),
-                    make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', 'NEW')];
-                var divs = [make.makeDividend('2014-05-14', 'TATA MOTORS', '250', 'NEW')];
+                var trades = [make.makeBuy('2014-05-14', 'TATA MOTORS', 20, '570', '123.45', '0', 'NEW'),
+                    make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
+                var divs = [make.makeDividend('2014-05-14', 'TATA MOTORS', '250', '0', 'NEW')];
                 acc.register(trades);
                 acc.addDividends(divs);
                 mapper.save(acc, (err, account) => {
@@ -118,7 +118,7 @@ describe('Account', function () {
             (err, holdings) => {
                 expect(holdings.length).toEqual(1);
                 expect(holdings[0].qty).toEqual(40);
-                expect(holdings[0].avg_price.toString()).toEqual('610.13');
+                expect(holdings[0].avg_price).toBeWorth('610.13');
                 done();
             }
         );

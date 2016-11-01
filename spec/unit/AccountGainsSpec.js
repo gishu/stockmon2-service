@@ -10,7 +10,7 @@ var BigNumber = require('bignumber.js');
 
 var helpers = require('../helpers/test_helper.js');
 
-describe('Account', function () {
+describe('Account (Gains)', function () {
 
     it('can compute long term gains', function (done) {
         async.waterfall([
@@ -44,7 +44,7 @@ describe('Account', function () {
                 gains = snapshot.gains();
                 expect(_.map(gains, 'stock')).toEqual(['HDFC', 'HDFCBANK']);
                 expect(_.map(gains, 'qty')).toEqual([4, 10]);
-                expect(_.map(gains, g => g.gain.toString())).toEqual(['1724.88', '5590.46']);
+                expect(_.map(gains, g => g.gain.toFixed(2))).toEqual(['1724.88', '5590.46']);
 
                 expect(snapshot.dividends().length).toEqual(0);
 
@@ -83,12 +83,12 @@ describe('Account', function () {
                 expect(sets.length).toEqual(2);
 
                 var totalSTGain = _.reduce(sets[0], (result, g) => result.add(g.gain), new BigNumber(0));
-                expect(totalSTGain.toString()).toEqual('-66.99');
+                expect(totalSTGain).toBeWorth('-66.99');
                 var shortTermGains = _.map(sets[0], g => g.date.format('YYYY-MM-DD =>') + g.qty);
                 expect(shortTermGains).toEqual(['2014-04-01 =>250', '2015-01-23 =>250', '2015-02-24 =>250']);
 
                 var totalLTGain = _.reduce(sets[1], (result, g) => result.add(g.gain), new BigNumber(0));
-                expect(totalLTGain.toString()).toEqual('7284.79');
+                expect(totalLTGain).toBeWorth('7284.79');
                 var longTermGains = _.map(sets[1], g => g.date.format('YYYY-MM-DD =>') + g.qty);
                 expect(longTermGains).toEqual(['2014-04-10 =>250', '2015-02-24 =>250']);
 
@@ -118,23 +118,24 @@ describe('Account', function () {
                 var snapshot = snapshots.shift();
 
                 expect(snapshot.year()).toBe(2012);
-                expect(snapshot.netGain().toString()).toBe('100'); // just dividends
+                expect(snapshot.netGain()).toBeWorth('100.00'); // just dividends
 
                 snapshot = snapshots.shift();
                 expect(snapshot.year()).toBe(2013);
-                expect(snapshot.longTermGains().toString()).toBe('0');
-                expect(snapshot.shortTermGains().toString()).toBe('5648.25');
-                expect(snapshot.netGain().toString()).toBe('4801.0125'); //TODO : Fix decimal places
+                expect(snapshot.longTermGains()).toBeWorth('0.00');
+                expect(snapshot.shortTermGains()).toBeWorth('5648.25');
+                expect(snapshot.netGain()).toBeWorth('4775.60'); 
 
                 snapshot = snapshots.shift();
                 expect(snapshot.year()).toBe(2014);
-                expect(snapshot.longTermGains().toString()).toBe('7284.79');
-                expect(snapshot.shortTermGains().toString()).toBe('-66.99');
-                expect(snapshot.netGain().toString()).toBe('7217.8');
+                expect(snapshot.longTermGains()).toBeWorth('7284.79');
+                expect(snapshot.shortTermGains()).toBeWorth('-66.99');
+                expect(snapshot.netGain()).toBeWorth('7217.80');
 
-                snapshot = snapshots.shift();
+                snapshot = snapshots.shift(); // ST Gains with taxes
                 expect(snapshot.year()).toBe(2015);
-                expect(snapshot.netGain().toString()).toBe('0');
+                expect(snapshot.taxes()).toBeWorth('334.21')
+                expect(snapshot.netGain()).toBeWorth('1828.99');
 
                 done();
             }
@@ -144,7 +145,7 @@ describe('Account', function () {
     xit('will not recompute annual statements if they are already persisted');
     
 
-    it('will compute brokerage as per associated broker', done => {
+    xit('will compute brokerage as per associated broker', done => {
         async.waterfall([
             (cb) => {
                 parse(helpers.getCsvStream('sample_trades.csv'), (err, results) => cb(err, results));

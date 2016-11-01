@@ -10,10 +10,8 @@ var log = require('debug')('simulate');
 
 // simulation of trades to annual snapshots
 
-module.exports = function (openingHoldings, tradeStream, dividendStream, brokerageFunc, callback) {
-    var getBrokerage = brokerageFunc,
-
-        trades = _.cloneDeep(tradeStream),
+module.exports = function (openingHoldings, tradeStream, dividendStream, callback) {
+    var trades = _.cloneDeep(tradeStream),
         divvies = dividendStream;
 
     function simulate() {
@@ -91,7 +89,9 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, brokera
 
                     isShortTerm = (days < 365);
 
-                    brokerage = getBrokerage(qty, buy.price, true).plus(getBrokerage(qty, sale.price, false));
+                    brokerage = buy.brokerage.mul(qty).div(buy.qty);
+                    brokerage = brokerage.plus(sale.brokerage.mul(qty).div(sale.qty));
+                    
                     gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, brokerage, isShortTerm));
                     buy.balance -= qty;
                     saleQty -= qty;

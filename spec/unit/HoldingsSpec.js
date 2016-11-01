@@ -10,7 +10,7 @@ var make = require('../../src/Trade.js');
 var helpers = require('../helpers/test_helper.js');
 
 
-describe('Account', function () {
+describe('Account (holdings)', function () {
     
     it('correctly handles sale split across multiple buys', function (done) {
 
@@ -29,7 +29,7 @@ describe('Account', function () {
             (err, holdings) => {
                 expect(holdings.length).toEqual(1);
                 expect(holdings[0].qty).toEqual(15);
-                expect(holdings[0].avg_price.toString()).toEqual('717');
+                expect(holdings[0].avg_price).toBeWorth('717.00');
                 done();
             }
         );

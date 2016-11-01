@@ -13,16 +13,16 @@ function createStringStream(str) {
 
 function deleteDb(path) {
     var log = require('debug')('db');
-    
-    if (path === ':memory:'){ return; }
-    
+
+    if (!path || (path === ':memory:')) { return; }
+
     try {
         fs.accessSync(path, fs.F_OK);
         fs.unlinkSync(path);
     }
     catch (e) {
         if (!(e.code === 'ENOENT')) {
-            log(e);
+            log('Delete ' + path + ' failed with ' + e);
         }
 
     }

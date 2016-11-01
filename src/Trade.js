@@ -1,46 +1,39 @@
-var BigNumber = require('bignumber.js');
+var parse = require('./util/parse.js');
 var moment = require('moment');
 var _ = require('lodash');
 
 
-function makeTrade(date, stock, qty, price, is_buy, notes) {
-    var parsedPrice = parseToBigNumber(price);
+function makeTrade(date, stock, qty, price, is_buy, brokerage, notes) {
+    var parsedPrice = parse.toBigNumber(price), 
+        parsedBrokerage = parse.toBigNumber(brokerage);
 
     return {
-        'date': parseDate(date),
+        'date': parse.toDate(date),
         'stock': _.toUpper(stock),
         'qty': qty,
         'is_buy': is_buy,
         'price': parsedPrice,
+        'brokerage': parsedBrokerage,
         'notes': notes || ''
     };
 }
-function makeBuy(date, stock, qty, price, notes) {
-    return makeTrade(date, stock, qty, price, true, notes);
+function makeBuy(date, stock, qty, price, brokerage, notes) {
+    return makeTrade(date, stock, qty, price, true, brokerage, notes);
 }
-function makeSale(date, stock, qty, price, notes) {
-    return makeTrade(date, stock, qty, price, false, notes);
-}
-
-function parseDate(date) {
-    return (moment.isMoment(date) ? date : moment(date));
+function makeSale(date, stock, qty, price, brokerage, notes) {
+    return makeTrade(date, stock, qty, price, false, brokerage, notes);
 }
 
-function parseToBigNumber(value) {
-    if (typeof (value) === 'string') {
-        return new BigNumber(value);
-    }
-    return value;
-}
+
 
 function makeGain(date, stock, qty, buyId, buy_price, saleId, sell_price, brokerage_amt, isShortTerm) {
 
-    var cp = parseToBigNumber(buy_price),
-        sp = parseToBigNumber(sell_price),
-        brokerage = parseToBigNumber(brokerage_amt);
+    var cp = parse.toBigNumber(buy_price),
+        sp = parse.toBigNumber(sell_price),
+        brokerage = parse.toBigNumber(brokerage_amt);
 
     return {
-        'date': parseDate(date),
+        'date': parse.toDate(date),
         'stock': stock,
         'qty': qty,
         'buyId': buyId,
@@ -54,22 +47,20 @@ function makeGain(date, stock, qty, buyId, buy_price, saleId, sell_price, broker
 }
 function makeDividend(date, stock, amount, notes) {
     return {
-        'date': parseDate(date),
+        'date': parse.toDate(date),
         'stock': _.toUpper(stock),
-        'amount': parseToBigNumber(amount),
+        'amount': parse.toBigNumber(amount),
         'notes': notes || ''
     };
 }
 function loadBuy(row) {
-    var buy = makeBuy(moment(row.Date).toDate(), row.Stock, row.Qty, row.Price, row.Notes);
+    var buy = makeBuy(moment(row.Date).toDate(), row.Stock, row.Qty, row.Price, row.Brokerage, row.Notes);
     buy.id = row.Id;
-    buy.brokerage = parseToBigNumber(row.Brokerage);
     return buy;
 }
 function loadSale(row) {
-    var sale = makeSale(moment(row.Date), row.Stock, row.Qty, row.Price, row.Notes);
+    var sale = makeSale(moment(row.Date), row.Stock, row.Qty, row.Price, row.Brokerage, row.Notes);
     sale.id = row.Id;
-    sale.brokerage = parseToBigNumber(row.Brokerage);
     return sale;
 
 }

@@ -1,24 +1,19 @@
 var _ = require('lodash');
-var BigNumber = require('bignumber.js');
+var BigNumber = require('./util/bignumber_std.js');
 
 function makeSnapshot(year, gains, dividends, holdings) {
-    BigNumber.config({ DECIMAL_PLACES: 2 });
-
+    
     var _year = year,
         _gains = _.cloneDeep(gains),
         _divs = _.cloneDeep(dividends),
-        _holdings = _.cloneDeep(holdings)
-    ZERO = new BigNumber(0);
+        _holdings = _.cloneDeep(holdings),
+        ZERO = new BigNumber(0);
 
     _gains = _.sortBy(_gains, ['date', 'stock']);
 
     function calcNetGain() {
-        var shortTermGains = this.shortTermGains();
-        if (shortTermGains.greaterThan(ZERO)) {
-            shortTermGains = shortTermGains.mul(new BigNumber(0.85));
-        }
         var byWayOfDivs = _.reduce(_divs, (sum, d) => sum.plus(d.amount), ZERO);
-        return this.longTermGains().plus(shortTermGains).plus(byWayOfDivs);
+        return this.longTermGains().plus(this.shortTermGains()).plus(byWayOfDivs).minus(this.taxes());
     }
 
     return {
@@ -28,6 +23,10 @@ function makeSnapshot(year, gains, dividends, holdings) {
         holdings: () => _holdings,
         longTermGains: () => _(gains).reject(g => g.isShortTerm).reduce((sum, g) => sum.plus(g.gain), ZERO),
         shortTermGains: () => _(gains).filter(g => g.isShortTerm).reduce((sum, g) => sum.plus(g.gain), ZERO),
+        taxes: function(){
+            var taxableGains = this.shortTermGains();
+            return (taxableGains.greaterThan(ZERO) ? taxableGains.mul(0.1545) : 0 );
+        },
         netGain: calcNetGain
     };
 }

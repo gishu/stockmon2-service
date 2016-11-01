@@ -120,7 +120,7 @@ describe('Account', function () {
                 var snapshot = snapshots.forYear(2008);
                 var div = snapshot.dividends()[0];
                 expect(div.stock).toBe("SBI");
-                expect(div.amount.toString()).toBe("123");
+                expect(div.amount).toBeWorth("123.00");
 
 
                 snapshot = snapshots.forYear(2009);
