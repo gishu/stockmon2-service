@@ -162,6 +162,19 @@ function getAccountMapper(database) {
         }
     }
 
+    // returns ids for all accounts
+    function _loadAll(loadCallback) {
+        try {
+            database.execute(db => {
+                db.all('select Id from Accounts order by Id', (err, rows) => {
+                    loadCallback(null, _.map(rows, row => row.Id));
+                });
+            });
+        } catch (err) {
+            loadCallback(err, null);
+        }
+    }
+
     function _saveTrades(accountId, trades, insertBuyStmt, insertSaleStmt, callback) {
         var newTrades = _.filter(trades, t => t.id < 0);
         async.each(newTrades, (t, cb) => {
@@ -204,6 +217,7 @@ function getAccountMapper(database) {
     return {
         load: _load,
         save: _save,
+        loadAll: _loadAll
     };
 }
 module.exports = getAccountMapper;

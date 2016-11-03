@@ -1,4 +1,4 @@
-describe('Account (persistence)', function () {
+describe('AccountMapper', function () {
 
     var path = require('path');
     var async = require('async');
@@ -17,7 +17,7 @@ describe('Account (persistence)', function () {
     var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-        
+
         database = getDatabase();
         mapper = getAccountMapper(database);
         snapshotMapper = getSnapshotMapper(database);
@@ -104,7 +104,7 @@ describe('Account (persistence)', function () {
             },
             (acc, cb) => {
                 var trades = [make.makeBuy('2014-05-14', 'TATA MOTORS', 20, '570', '123.45', '0', 'NEW'),
-                    make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
+                make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
                 var divs = [make.makeDividend('2014-05-14', 'TATA MOTORS', '250', '0', 'NEW')];
                 acc.register(trades);
                 acc.addDividends(divs);
@@ -123,5 +123,43 @@ describe('Account (persistence)', function () {
             }
         );
     });
+
+    it('can retrieve all account Ids', function (done) {
+        var customers = ['Obi', 'Wan', 'Kenobi'];
+
+        async.waterfall([
+            cb => {
+                parse(helpers.getCsvStream('split_trades.csv'), (err, results) => cb(err, results));
+            },
+            (results, cb) => {
+                async.eachSeries(customers,
+                    function (c, callback) {
+
+                        var acc = account.create(c, 'HDFC');
+                        acc.register(results.trades);
+                        acc.addDividends(results.dividends);
+                        mapper.save(acc, (err, account) => {
+                            callback(err); 
+                        });
+                    },
+                    (err) => cb(err));
+            },
+            (cb) => {
+                mapper.loadAll((err, accounts) => {
+                    cb(err, accounts);
+                });
+            }],
+            (err, accounts) => {
+                if (err) {
+                    done.fail(err);
+                    return;
+                }
+
+                expect(accounts).toEqual([1,2,3]);
+                done();
+            }
+        )
+
+    })
 
 });
