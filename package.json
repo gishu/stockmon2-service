@@ -27,7 +27,8 @@
   },
   "devDependencies": {
     "jasmine": "^2.4.1",
-    "jasmine-spec-reporter": "^2.4.0"
+    "jasmine-spec-reporter": "^2.4.0",
+    "nodemon": "^1.11.0"
   },
   "scripts": {
     "test": "node spec/jasmine_runner.js",

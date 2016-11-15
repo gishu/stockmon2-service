@@ -60,7 +60,7 @@ function create(name, broker) {
                 thisTrade.id = thisTrade.id || _nextId--;
                 _trades.push(thisTrade);
                 _mapStockToQty[trade.stock] = _mapStockToQty[trade.stock] || 0;
-                
+
                 if (trade.is_buy) {
                     thisTrade.balance = trade.qty;
 
@@ -93,6 +93,7 @@ function create(name, broker) {
         return temp.div(qty1 + qty2);
     }
 
+    // can be looked up from snapshot
     function getHoldings(callback) {
         simulate(_holdings, _trades, _dividends, (err, snapshots) => {
             if (err) {
@@ -119,6 +120,7 @@ function create(name, broker) {
             callback(null, holdings);
         });
     }
+    // write to DB cache if modified
     function getAnnualStmts(callback) {
         return simulate(_holdings, _trades, _dividends, callback);
     }

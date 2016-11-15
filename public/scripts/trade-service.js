@@ -16,7 +16,6 @@
                     headers: { 'Accept': 'application/json' }
                 }).then(
                     function (resp) {
-                        console.log('Got trades');
                         trades.resolve(resp.data);
                     },
                     function (error) {

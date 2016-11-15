@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var BigNumber = require('./util/bignumber_std.js');
+var moment = require('moment');
 
 function makeSnapshot(year, gains, dividends, holdings) {
     
@@ -23,6 +24,8 @@ function makeSnapshot(year, gains, dividends, holdings) {
         holdings: () => _holdings,
         longTermGains: () => _(gains).reject(g => g.isShortTerm).reduce((sum, g) => sum.plus(g.gain), ZERO),
         shortTermGains: () => _(gains).filter(g => g.isShortTerm).reduce((sum, g) => sum.plus(g.gain), ZERO),
+        dividendGains: () => _(dividends).reduce((sum, d) => sum.plus(d.amount), ZERO),
+        brokerage: () => 0,
         taxes: function(){
             var taxableGains = this.shortTermGains();
             return (taxableGains.greaterThan(ZERO) ? taxableGains.mul(0.1545) : 0 );
@@ -33,9 +36,12 @@ function makeSnapshot(year, gains, dividends, holdings) {
 function forYear(aYear) {
     return _.find(this, s => s.year() === aYear);
 }
-function makeSnapshots(snapshotsArray) {
-    var wrappedArray = Object.create(snapshotsArray);
+function makeSnapshots(snapshotsArray, generatedAt) {
+    var wrappedArray = Object.create(snapshotsArray),
+        computedOn = (generatedAt ? generatedAt : new moment());
+
     wrappedArray.forYear = forYear;
+    wrappedArray.createdAt = () => computedOn;
     return wrappedArray;
 }
 

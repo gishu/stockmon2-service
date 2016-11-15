@@ -15,6 +15,7 @@ var BigNumber = require('bignumber.js');
 
 var parse = require('../src/CsvParser.js');
 var accountMaker = require('../src/Account.js');
+var makeTeller = require('../src/teller.js');
 
 function createStringStream(str) {
   var stream = require('stream');
@@ -27,8 +28,8 @@ function createStringStream(str) {
 }
 
 // create ./tmp folder for writing out temp csv files
-fs.access('./tmp', fs.W_OK, err =>{
-  if (err && (err.code === "ENOENT")){
+fs.access('./tmp', fs.W_OK, err => {
+  if (err && (err.code === "ENOENT")) {
     fs.mkdirSync('./tmp');
   }
 });
@@ -59,17 +60,18 @@ router.put('/:id/trades', function (req, res, next) {
   }
 
   var accountId = _.toInteger(req.params.id),
-    accMapper = req.app.get('accountMapper');
+    accMapper = req.app.get('accountMapper'),
+    snapshotMapper = req.app.get('snapshotMapper');
 
   async.waterfall([
-    (cb) => accMapper.load(accountId, (err, acc) => cb(err, acc)),
-    (acc, cb) => {
+    (cb) => {
       log('Reading csv..');
-      parse(createStringStream(req.body), (err, results) => cb(null, acc, results));
+      parse(createStringStream(req.body), (err, results) => cb(null, results));
     },
-    (acc, parsedResults, cb) => {
+    (parsedResults, cb) => {
       log('Loading trades...');
-
+      var teller = makeTeller(accMapper, snapshotMapper);
+      teller.register(accountId, parsedResults.trades, err => cb(err));
       acc.register(parsedResults.trades);
       acc.addDividends(parsedResults.dividends);
       log('Saving account.');
@@ -105,42 +107,40 @@ router.get('/:id/holdings', (req, res) => {
 
 router.get('/:id/snapshots', (req, res) => {
   var accountId = _.toInteger(req.params.id),
-    accMapper = req.app.get('accountMapper');
+    accMapper = req.app.get('accountMapper'),
+    snapshotMapper = req.app.get('snapshotMapper'),
+    teller = makeTeller(accMapper, snapshotMapper);
 
-  async.waterfall([
-    (cb) => accMapper.load(accountId,
-      (err, acc) => cb(err, acc)),
-    (account, cb) => account.getAnnualStmts(
-      (err, snapshots) => cb(err, snapshots))
-  ],
-    function (err, snapshots) {
-      if (err) {
-        log('Failed to retrieve snapshot for ' + year + err);
-        res.sendStatus(500);
-        return;
-      }
-      try {
-        var peeks = snapshots.map(function (s) {
-          return {
-            year: s.year(),
-            url: '/accounts' + req.url + '/' + s.year(),
-            longTerm: s.longTermGains(),
-            shortTerm: s.shortTermGains(),
-            dividends: _.reduce(s.dividends(), (sum, d) => sum.plus(d.amount), new BigNumber(0)),
-            net: s.netGain().toFixed(2)
-          };
-        });
-        res.json(peeks);
-      }
-      catch (err) {
-        log(err);
-        throw err;
-      }
-    });
+  teller.getAnnualStmts(accountId, (err, snapshots) => {
+    if (err) {
+      log('Failed to retrieve snapshot for ' + year + err);
+      res.sendStatus(500);
+      return;
+    }
+    try {
+      var peeks = snapshots.map(function (s) {
+        return {
+          year: s.year(),
+          url: '/accounts' + req.url + '/' + s.year(),
+          longTerm: s.longTermGains(),
+          shortTerm: s.shortTermGains(),
+          dividends: _.reduce(s.dividends(), (sum, d) => sum.plus(d.amount), new BigNumber(0)),
+          taxes: s.taxes().toFixed(2),
+          net: s.netGain().toFixed(2)
+        };
+      });
+      res.json(peeks);
+    }
+    catch (err) {
+      log(err);
+      res.sendStatus(500);
+      return;
+    }
+  });
 });
 
 router.get('/:id/snapshots/:year(\\d{4})/gains', (req, res) => {
-  getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
+  _getStatement(req.params, req.app.get('accountMapper'), req.app.get('snapshotMapper'), (err, snapshot) => {
     if (err) {
       res.sendStatus(500);
       return;
@@ -165,7 +165,7 @@ router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
       'text/html': () => res.render('holdings', { year: req.params.year }),
 
       'application/json': () => {
-        getSnapshot(req.params, req.app.get('accountMapper'), (err, snapshot) => {
+        _getStatement(req.params, req.app.get('accountMapper'), req.app.get('snapshotMapper'), (err, snapshot) => {
           if (err) {
             res.sendStatus(500);
             return;
@@ -205,40 +205,6 @@ router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
 
 });
 
-router.put('/:id/snapshots/:year(\\d{4})', (req, res) => {
-  var accountId = _.toInteger(req.params.id),
-    year = _.toInteger(req.params.year),
-    accMapper = req.app.get('accountMapper'),
-    snapshotMapper = req.app.get('snapshotMapper');
-
-
-  async.waterfall([
-    (cb) => accMapper.load(accountId,
-      (err, acc) => cb(err, acc)),
-    (account, cb) => account.getAnnualStmts(
-      (err, snapshots) => cb(err, snapshots)),
-    (snapshots, cb) => {
-      var toBeSaved = _.filter(snapshots, s => s.year() <= year);
-      if (toBeSaved.length == 0) {
-        cb(null, null);
-        return;
-      }
-      snapshotMapper.saveSnapshots(accountId, toBeSaved, (err) => {
-        cb(err, null);
-      })
-    }
-  ],
-    function (err, snapshots) {
-      if (err) {
-        log('Failed to save snapshots till ' + year + err);
-        res.sendStatus(500);
-        return;
-      }
-
-      res.sendStatus(201);
-    });
-});
-
 router.get('/:id/trades', function (req, res, next) {
   res.format({
     'text/html': () => {
@@ -268,28 +234,21 @@ router.get('/:id/trades', function (req, res, next) {
   })
 });
 
-function getSnapshot(params, mapper, callback) {
+function _getStatement(params, mapper, stmtMapper, callback) {
   var accountId = _.toInteger(params.id),
     year = _.toInteger(params.year),
-    accMapper = mapper;
+    teller = makeTeller(mapper, stmtMapper);
 
-  async.waterfall([
-    (cb) => accMapper.load(accountId,
-      (err, acc) => cb(err, acc)),
-    (account, cb) => account.getAnnualStmts(
-      (err, snapshots) => cb(err, snapshots))
-  ],
-    function (err, snapshots) {
-      if (err) {
-        log('Failed to retrieve snapshot for ' + year + err);
-        res.sendStatus(500);
-        callback(err, null);
-        return;
-      }
-
-      callback(null, snapshots.forYear(year));
+  teller.getAnnualStmts(accountId, (err, snapshots) => {
+    if (err) {
+      log('Failed to retrieve snapshot for ' + year + err);
+      res.sendStatus(500);
+      callback(err, null);
+      return;
     }
-  );
+
+    callback(null, snapshots.forYear(year));
+  });
 }
 
 function writeSnapshot(snapshot, ws) {

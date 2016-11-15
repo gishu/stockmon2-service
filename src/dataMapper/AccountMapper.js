@@ -13,7 +13,7 @@ function getAccountMapper(database) {
     var snapshotMapper = getSnapshotMapper(database);
 
     function _load(id, loadCallback) {
-        log('Loading account...');
+        log('Loading account...' + id);
 
         database.execute(db => {
             var optimizedArgs, optimizeHoldings,
@@ -103,7 +103,7 @@ function getAccountMapper(database) {
                 }
             ],
                 (err, result) => {
-                    log('Load account done!');
+                    log('Load account ' + (err ? ' failed! ' : 'done.'));
                     loadCallback(err, result);
                 }
             );  // end async waterfall
