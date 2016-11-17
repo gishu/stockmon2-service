@@ -16,7 +16,7 @@ function getAccountMapper(database) {
         log('Loading account...' + id);
 
         database.execute(db => {
-            var optimizedArgs, optimizeHoldings,
+            var optimizeHoldings, openingStmt, // optimization vars
                 buySql = 'select * from Buys where AccountId = ?',
                 saleSql = 'select * from Sales where AccountId = ?',
                 divSql = 'select * from Dividends where AccountId = ?',
@@ -24,19 +24,18 @@ function getAccountMapper(database) {
 
             async.waterfall([
                 cb => {
-                    snapshotMapper.getLatestSnapshot(id, (err, snapshot) => {
-                        cb(null, snapshot);
-                    });
+                    snapshotMapper.loadSnapshots(id, (err, snapshots) => cb(err, snapshots));
                 },
-                (snapshot, cb) => {
-                    if (snapshot) {
-                        // If last saved fin year is 2009, we want to exclude trades older than 1-Apr-2010
-                        detailArgs.push(moment([snapshot.year() + 1, 3, 1]).toISOString());
+                (snapshots, cb) => {
+                    if (snapshots.length > 1) {
+
+                        openingStmt = _.nth(snapshots, -2);
+                        detailArgs.push(moment([openingStmt.year() + 1, 3, 1]).toISOString());
                         var dateClause = ' AND date(Date) > ?';
                         buySql += dateClause;
                         saleSql += dateClause;
                         divSql += dateClause;
-                        optimizeHoldings = snapshot.holdings();
+                        optimizeHoldings = openingStmt.holdings();
                     }
                     cb(null);
                 },
@@ -77,18 +76,21 @@ function getAccountMapper(database) {
                                     acb(null, _.map(rows, make.loadDiv));
                                 }
                             });
-                        },
+                        }
                     ],
                         (err, results) => {
-                            var accInfo, loadedState;
+                            var accInfo = results[0],
+                                buys = results[1], sales = results[2],
+                                dividends = results[3],
+                                loadedState;
+
                             if (err) {
                                 cb(new Error(err), null);
                                 return;
                             }
-                            var trades = _(results[1]).concat(results[2]).sortBy('date').value();
-                            var dividends = results[3];
+                            var trades = _.concat(buys, sales);
+                            trades = _.sortBy(trades, 'date');
 
-                            accInfo = results[0];
                             loadedState = {
                                 id: accInfo['id'],
                                 name: accInfo['name'],
@@ -210,9 +212,6 @@ function getAccountMapper(database) {
                 callback(null, null);
             })
     }
-
-
-
 
     return {
         load: _load,

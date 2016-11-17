@@ -87,7 +87,53 @@ describe('AccountMapper', function () {
 
     it('ERR - cannot persist annual stmts until account has been saved once');
     it('ERR - cannot persist annual stmts until all trades and dividends are saved');
-    it('Split buy into multiple sales - brokerage split')
+
+    describe('optimization', () => {
+        var id_under_test = 0;
+        beforeEach(done => {
+
+            async.waterfall([
+                cb => parse(helpers.getCsvStream('five_year_trades.csv'), (err, results) => cb(err, results)),
+                (results, cb) => {
+                    var anAccount = account.create('Mushu', 'HDFC');
+                    anAccount.register(results.trades);
+                    anAccount.addDividends(results.dividends);
+                    mapper.save(anAccount, (err, savedAccount) => cb(err, savedAccount));
+                },
+                (savedAccount, cb) => savedAccount.getAnnualStmts((err, stmts) => cb(err, savedAccount.id(), stmts)),
+                (savedAccountId, stmts, cb) => {
+                    console.log(_.last(stmts).toString());
+                    snapshotMapper.saveSnapshots(savedAccountId, stmts, err => cb(err, savedAccountId));
+                }
+            ],
+                (err, savedAccountId) => {
+                    if (err) {
+                        done.fail(err)
+                    } else {
+                        id_under_test = savedAccountId;
+                        done();
+                    }
+                })
+        });
+
+        it('will load only last FY trades if prior annual stmts exist', done => {
+            mapper.load(id_under_test, (err, testAccount) => {
+                expect(testAccount.trades().length).toEqual(25); // just last stmt/2016 trades
+                testAccount.getAnnualStmts((err, stmts) => {
+                    if (err){
+                        done.fail(err);
+                    } else{
+                        console.log(_.last(stmts).toString());
+
+                        // even optimized load computes the right final stmt
+                        expect(_.last(stmts).netGain().toFixed(2)).toEqual('220839.57');
+                        done();
+                    }
+                })
+                
+            })
+        });
+    });
 
     it('can be updated with more trades periodically', (done) => {
         async.waterfall([
@@ -104,7 +150,7 @@ describe('AccountMapper', function () {
             },
             (acc, cb) => {
                 var trades = [make.makeBuy('2014-05-14', 'TATA MOTORS', 20, '570', '123.45', '0', 'NEW'),
-                make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
+                    make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
                 var divs = [make.makeDividend('2014-05-14', 'TATA MOTORS', '250', '0', 'NEW')];
                 acc.register(trades);
                 acc.addDividends(divs);
@@ -139,7 +185,7 @@ describe('AccountMapper', function () {
                         acc.register(results.trades);
                         acc.addDividends(results.dividends);
                         mapper.save(acc, (err, account) => {
-                            callback(err); 
+                            callback(err);
                         });
                     },
                     (err) => cb(err));
@@ -155,7 +201,7 @@ describe('AccountMapper', function () {
                     return;
                 }
 
-                expect(accounts).toEqual([1,2,3]);
+                expect(accounts).toEqual([1, 2, 3]);
                 done();
             }
         )

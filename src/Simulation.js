@@ -52,7 +52,7 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
             holdings = _.cloneDeep(opening_holdings), // we are going to mutate this one
             mapSales = {},
             divEntry;
-
+   
         _.forEach(trades, t => {
             var sale, buy;
             holdings[t.stock] = holdings[t.stock] || [];
@@ -68,6 +68,7 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
         });
 
         _.forOwn(mapSales, (sales, stock) => {
+
             var matchedTrades = match(holdings[stock], sales);
             _.each(matchedTrades, match => {
                 var sale = _.find(sales, { id: match.saleId }),
@@ -97,6 +98,9 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
                     saleQty -= qty;
                     if (buy.balance === 0) {
                         _.remove(holdings[sale.stock], { id: id });
+                        if (_.isEmpty(holdings[sale.stock])){
+                            delete holdings[sale.stock];
+                        }
                     }
                 })
 

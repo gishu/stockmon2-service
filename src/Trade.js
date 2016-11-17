@@ -55,7 +55,7 @@ function makeDividend(date, stock, amount, notes) {
 }
 function loadBuy(row) {
     var buy = makeBuy(moment(row.Date).toDate(), row.Stock, row.Qty, row.Price, row.Brokerage, row.Notes);
-    buy.id = row.Id;
+    buy.id = row.Id || row.buy_id; // stmts will use their foreign key
     return buy;
 }
 function loadSale(row) {

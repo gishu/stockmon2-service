@@ -10,7 +10,7 @@ module.exports = function (pathToDatabase) {
     var _dbPromise = getDatabasePromise();
 
     function getDatabasePromise() {
-        var __DB_NAME = pathToDatabase || ':memory:';  ;
+        var __DB_NAME = pathToDatabase || ':memory:';
 
         // to debug use require('sqlite3').verbose()
         // put in a local file path above
@@ -29,7 +29,7 @@ module.exports = function (pathToDatabase) {
                 function (db_exists, callback) {
                     var db = new sqlite.Database(__DB_NAME);
                     var path = require('path');
-db.on('trace', (sql) => log(sql));
+                    
                     if (db_exists) {
                         callback(null, db);
                         return;

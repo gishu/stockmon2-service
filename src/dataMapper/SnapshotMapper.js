@@ -8,6 +8,8 @@ var makeNew = require('../Snapshot.js');
 var log = require('debug')('snapMapper');
 
 module.exports = function getSnapshotMapper(database) {
+
+    //TODO:  can be replacedBy getSnapshotForYear(?)
     function _getLatestSnapshot(accountId, callback) {
         database.execute(db => {
             async.series([
@@ -218,6 +220,8 @@ module.exports = function getSnapshotMapper(database) {
             }
         });
     }
+
+    // saveCallback (err) => ..
     function _saveSnapshots(accountId, snapshots, saveCallback) {
         log('Saving snapshot...');
         try {
