@@ -65,17 +65,11 @@ router.put('/:id/trades', function (req, res, next) {
 
   async.waterfall([
     (cb) => {
-      log('Reading csv..');
       parse(createStringStream(req.body), (err, results) => cb(null, results));
     },
     (parsedResults, cb) => {
-      log('Loading trades...');
       var teller = makeTeller(accMapper, snapshotMapper);
-      teller.register(accountId, parsedResults.trades, err => cb(err));
-      acc.register(parsedResults.trades);
-      acc.addDividends(parsedResults.dividends);
-      log('Saving account.');
-      accMapper.save(acc, (err, acc) => cb(err, acc));
+      teller.register(accountId, parsedResults.trades, parsedResults.dividends, err => cb(err));
     }],
     function (err, result) {
       if (err) {
