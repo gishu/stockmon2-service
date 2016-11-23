@@ -8,11 +8,17 @@ a {
   color: #00B7FF;
 }
 
-.short {
+.st2-profit {
+  color: darkgreen;
+}
+.st2-loss {
+  color: crimson;
+}
+.st2-short {
   color: red;
   border: 1px dashed tomato;
 }
-.almost {
+.st2-almost {
   color: darkorange;
   border: 1px dashed tomato;
 }

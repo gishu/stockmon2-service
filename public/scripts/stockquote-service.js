@@ -47,7 +47,8 @@
             "TATA ST": "TATASTEEL",
             "TCS": "",
             "TECHM": "",
-            "STEEL STRIPS": "SSWL"
+            "STEEL STRIPS": "SSWL",
+            "VOLTAS":""
         },
             NSE_PROXY_URL = "/nseProxy?symbol=";
 

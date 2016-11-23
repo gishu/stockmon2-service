@@ -3,9 +3,9 @@ var app = angular.module('snapshotHoldingsApp', ['ngTouch', 'ui.grid', 'ui.grid.
 
 app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteService', 'uiGridConstants',
     function ($scope, $location, tradesSvc, quoteSvc, gridConstants) {
-        var getAgeBin = function () {
-            if (this.age_months < 12) {
-                return (this.age_months <= 9 ? "SHORT" : "ALMOST");
+        var getAgeBin = function (age_months) {
+            if (age_months < 12) {
+                return (age_months <= 9 ? "SHORT" : "ALMOST");
             } else {
                 return "";
             }
@@ -27,7 +27,13 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 { name: 'Date', field: 'date', sort: { direction: gridConstants.DESC, priority: 1 } },
                 { name: 'Units', field: 'qty', cellClass: 'money' },
                 { name: 'Price', field: 'price_f', type: 'number', cellClass: 'money' },
-                { name: 'Age', field: 'age()' },
+                {
+                    name: 'Age', field: 'age', cellClass: function (grid, row, col, rIndex, cIndex) {
+                        var cellValue = grid.getCellValue(row, col);
+                        if (cellValue.length === 0) return;
+                        return (cellValue === 'SHORT' ? 'st2-short' : 'st2-almost');
+                    }
+                },
                 { name: 'MarketPrice', field: 'market_price', cellClass: 'money' },
                 { name: 'Change', field: 'change', cellClass: 'money' },
                 { name: 'Range', field: 'range52week', width: '15%' },
@@ -35,7 +41,9 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 { name: 'Gain', field: 'gain', type: 'number', cellClass: 'money' },
                 { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' }
             ],
-            rowTemplate: '<div ng-class="{\'almost\':row.entity.age_months<12 && row.entity.age_months>9, \'short\':row.entity.age_months<=9  }" <div ng-repeat="col in colContainer.renderedColumns track by col.colDef.name"  class="ui-grid-cell" ui-grid-cell></div></div>',
+             rowTemplate: `<div ng-class="{'st2-loss':row.entity.gain_percent < -15, 'st2-profit': row.entity.gain_percent > 25}"> 
+             <div ng-repeat="col in colContainer.renderedColumns track by col.colDef.name"  class="ui-grid-cell" ui-grid-cell></div>
+             </div>`,
 
 
             data: []
@@ -58,7 +66,7 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                         qty: h.qty,
                         price: h.price,
                         price_f: h.price.toString(),
-                        age_months: h.age_months
+                        age: getAgeBin(h.age_months)
                     }
                 });
                 $scope.gridViewModel.data = viewModel;
@@ -66,7 +74,6 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
             })
             .then(quotes => {
                 _.each(viewModel, model => {
-                    model.age = getAgeBin;
                     var quote = quotes[model.stock];
                     if (quote) {
 

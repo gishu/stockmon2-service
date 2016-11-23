@@ -183,7 +183,7 @@ router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
             viewModel = _.concat(viewModel, _.map(trades, t => {
               return {
                 stock: t.stock,
-                date: t.date.format('YYYY-MMM-DD'),
+                date: t.date.format('YYYY-MM-DD'),
                 qty: t.balance,
                 price: t.price,
                 age_months: today.diff(t.date, 'months')
