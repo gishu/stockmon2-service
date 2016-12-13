@@ -107,7 +107,7 @@ module.exports = function getSnapshotMapper(database) {
                                 if (err) { cb(err); return; }
 
                                 cb(null,
-                                    _.map(rows, row => make.makeGain(moment(row.Date), row.Stock, row.Qty, row.BuyId, row.BuyPrice, row.SaleId, row.SalePrice, row.Brokerage, row.Gain, (row.IsShortTerm !== 0))));
+                                    _.map(rows, row => make.makeGain(moment(row.Date), row.Stock, row.Qty, row.BuyId, row.BuyPrice, row.SaleId, row.SalePrice, row.Brokerage, (row.IsShortTerm !== 0))));
                             }
                         )
                     },
