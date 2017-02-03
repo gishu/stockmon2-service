@@ -186,7 +186,8 @@ router.get('/:id/snapshots/:year(\\d{4})/holdings', (req, res) => {
                 date: t.date.format('YYYY-MM-DD'),
                 qty: t.balance,
                 price: t.price,
-                age_months: today.diff(t.date, 'months')
+                age_months: today.diff(t.date, 'months'),
+                notes: t.notes
               };
             }));
 

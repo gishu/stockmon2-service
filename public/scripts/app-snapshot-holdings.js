@@ -39,7 +39,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 { name: 'Range', field: 'range52week', width: '15%' },
 
                 { name: 'Gain', field: 'gain', type: 'number', cellClass: 'money' },
-                { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' }
+                { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' },
+                { name: 'Notes', field: 'notes', type: 'string'}
             ],
              rowTemplate: `<div ng-class="{'st2-loss':row.entity.gain_percent < -15, 'st2-profit': row.entity.gain_percent > 25}"> 
              <div ng-repeat="col in colContainer.renderedColumns track by col.colDef.name"  class="ui-grid-cell" ui-grid-cell></div>
@@ -66,7 +67,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                         qty: h.qty,
                         price: h.price,
                         price_f: h.price.toString(),
-                        age: getAgeBin(h.age_months)
+                        age: getAgeBin(h.age_months),
+                        notes: h.notes
                     }
                 });
                 $scope.gridViewModel.data = viewModel;
