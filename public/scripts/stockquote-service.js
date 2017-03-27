@@ -20,7 +20,7 @@
             "CAN BANK": "CANBK",
             "CENTURY": "CENTURYTEX",
             "COAL IND": "COALINDIA",
-            "CROM GREAVES": "CROMPGREAV",
+            "CROM GREAVES": "CGPOWER",
             "CROMPTON ELEC": "CROMPTON",
             "EICHER": "EICHERMOT",
             "EXIDE": "EXIDEIND",
@@ -48,7 +48,9 @@
             "TCS": "",
             "TECHM": "",
             "STEEL STRIPS": "SSWL",
-            "VOLTAS":""
+            "VOLTAS":"",
+            "BFORGE": "BHARATFORG",
+            "NOCIL":""
         },
             NSE_PROXY_URL = "/nseProxy?symbol=";
 
