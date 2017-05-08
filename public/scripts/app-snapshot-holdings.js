@@ -37,7 +37,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 { name: 'MarketPrice', field: 'market_price', cellClass: 'money' },
                 { name: 'Change', field: 'change', cellClass: 'money' },
                 { name: 'Range', field: 'range52week', width: '15%' },
-
+                
+                { name: 'Cost', field: 'cost', type: 'number', cellClass: 'money' },
                 { name: 'Gain', field: 'gain', type: 'number', cellClass: 'money' },
                 { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' },
                 { name: 'Notes', field: 'notes', type: 'string'}
@@ -79,7 +80,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                     var quote = quotes[model.stock];
                     if (quote) {
 
-                        model.gain = new BigNumber(quote.p).minus(model.price).times(model.qty).toFixed(2);
+                        model.cost = new BigNumber(model.price).times(model.qty).div(1000).toString() + "K";
+                        model.gain = new BigNumber(quote.p).minus(model.price).times(model.qty).div(1000).toString() + "K";
                         model.gain_percent = new BigNumber(quote.p).minus(model.price).div(model.price).times(100).toFixed(2);
 
                         model.market_price = quote.p.toFixed(2);
