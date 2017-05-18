@@ -5,7 +5,7 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
     function ($scope, $location, tradesSvc, quoteSvc, gridConstants) {
         var getAgeBin = function (age_months) {
             if (age_months < 12) {
-                return (age_months <= 9 ? "SHORT" : "ALMOST");
+                return (age_months < 9 ? "SHORT" : "ALMOST");
             } else {
                 return "";
             }
@@ -38,8 +38,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 { name: 'Change', field: 'change', cellClass: 'money' },
                 { name: 'Range', field: 'range52week', width: '15%' },
                 
-                { name: 'Cost', field: 'cost', type: 'number', cellClass: 'money' },
-                { name: 'Gain', field: 'gain', type: 'number', cellClass: 'money' },
+                { name: 'Cost (K)', field: 'cost', type: 'number', cellClass: 'money' },
+                { name: 'Gain (K)', field: 'gain', type: 'number', cellClass: 'money' },
                 { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' },
                 { name: 'Notes', field: 'notes', type: 'string'}
             ],
@@ -80,8 +80,8 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                     var quote = quotes[model.stock];
                     if (quote) {
 
-                        model.cost = new BigNumber(model.price).times(model.qty).div(1000).toString() + "K";
-                        model.gain = new BigNumber(quote.p).minus(model.price).times(model.qty).div(1000).toString() + "K";
+                        model.cost = new BigNumber(model.price).times(model.qty).div(1000).toFixed(2);
+                        model.gain = new BigNumber(quote.p).minus(model.price).times(model.qty).div(1000).toFixed(2);
                         model.gain_percent = new BigNumber(quote.p).minus(model.price).div(model.price).times(100).toFixed(2);
 
                         model.market_price = quote.p.toFixed(2);
