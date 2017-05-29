@@ -36,8 +36,6 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 },
                 { name: 'MarketPrice', field: 'market_price', cellClass: 'money' },
                 { name: 'Change', field: 'change', cellClass: 'money' },
-                { name: 'Range', field: 'range52week', width: '15%' },
-                
                 { name: 'Cost (K)', field: 'cost', type: 'number', cellClass: 'money' },
                 { name: 'Gain (K)', field: 'gain', type: 'number', cellClass: 'money' },
                 { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' },
@@ -86,8 +84,6 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
 
                         model.market_price = quote.p.toFixed(2);
                         model.change = quote.c.toFixed(2);
-                        model.range52week = quote.r52;
-
                     } else {
                         console.error('Did not get quote for ' + model.stock);
                     }

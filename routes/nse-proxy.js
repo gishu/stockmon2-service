@@ -2,71 +2,67 @@ var express = require('express');
 var router = express.Router();
 var logger = require('debug')('st2:nse-rev-proxy');
 var through2 = require('through2');
-let cheerdo = require('cheerio');
 let zlib = require('zlib');
 let _ = require('lodash');
 
-var NSE_QUOTE_URL = 'https://nseindia.com/live_market/dynaContent/live_watch/get_quote/GetQuote.jsp',
+var STOCK_FEED_URL = 'http://www.google.com/finance/info',
     proxy = require('express-request-proxy');
 
 var symToNseSym = {
-    "ADANI POWER": "ADANIPOWER",
-    "ALOK": "ALOKTEXT",
-    "AND BANK": "ANDHRABANK",
-    "ASHOK": "ASHOKLEY",
-    "BLUE STAR": "BLUESTARCO",
-    "CAN BANK": "CANBK",
-    "CENTURY": "CENTURYTEX",
-    "COAL IND": "COALINDIA",
-    "CROM GREAVES": "CGPOWER",
-    "CROMPTON ELEC": "CROMPTON",
-    "EICHER": "EICHERMOT",
-    "EXIDE": "EXIDEIND",
-    "GAIL": "GAIL",
-    "HDFC": "",
-    "HDFCBANK": "",
-    "HIND ZINC": "HINDZINC",
-    "HINDAL": "HINDALCO",
-    "HPCL": "HINDPETRO",
-    "HUL": "HINDUNILVR",
-    "IDEA": "",
-    "L&T": "LT",
-    "L&T FIN": "L&TFH",
-    "LIC": "LICHSGFIN",
-    "M&M": "M&M",
-    "MARUTI": "",
-    "NTPC": "",
-    "ONGC": "",
-    "POWERG": "POWERGRID",
-    "SAIL": "",
-    "SBI": "SBIN",
-    "TATA MOTORS": "TATAMOTORS",
-    "TATA POW": "TATAPOWER",
-    "TATA ST": "TATASTEEL",
-    "TCS": "",
-    "TECHM": "",
-    "STEEL STRIPS": "SSWL",
-    "VOLTAS": "",
-    "BFORGE": "BHARATFORG",
-    "NOCIL": ""
+    "ADANI POWER": "NSE:ADANIPOWER",
+    "ALOK": "NSE:ALOKTEXT",
+    "AND BANK": "NSE:ANDHRABANK",
+    "ASHOK": "NSE:ASHOKLEY",
+    "BLUE STAR": "NSE:BLUESTARCO",
+    "CAN BANK": "NSE:CANBK",
+    "CENTURY": "NSE:CENTURYTEX",
+    "COAL IND": "NSE:COALINDIA",
+    "CROM GREAVES": "NSE:CGPOWER",
+    "CROMPTON ELEC": "NSE:CROMPTON",
+    "EICHER": "BOM:505200",
+    "EXIDE": "NSE:EXIDEIND",
+    "GAIL": "NSE:GAIL",
+    "HDFC": "NSE:HDFC",
+    "HDFCBANK": "NSE:HDFCBANK",
+    "HIND ZINC": "NSE:HINDZINC",
+    "HINDAL": "NSE:HINDALCO",
+    "HPCL": "NSE:HINDPETRO",
+    "HUL": "NSE:HINDUNILVR",
+    "IDEA": "NSE:IDEA",
+    "L&T": "NSE:LT",
+    "L&T FIN": "NSE:L&TFH",
+    "LIC": "NSE:LICHSGFIN",
+    "M&M": "NSE:M&M",
+    "MARUTI": "NSE:MARUTI",
+    "NTPC": "NSE:NTPC",
+    "ONGC": "NSE:ONGC",
+    "POWERG": "NSE:POWERGRID",
+    "SAIL": "NSE:SAIL",
+    "SBI": "NSE:SBIN",
+    "TATA MOTORS": "NSE:TATAMOTORS",
+    "TATA POW": "NSE:TATAPOWER",
+    "TATA ST": "NSE:TATASTEEL",
+    "TCS": "NSE:TCS",
+    "TECHM": "NSE:TECM",
+    "STEEL STRIPS": "NSE:SSWL",
+    "VOLTAS": "NSE:VOLTAS",
+    "BFORGE": "NSE:BHARATFORG",
+    "NOCIL": "NSE:NOCIL"
 };
 
 
 router.get('/', function (req, res, next) {
     proxy({
-        url: NSE_QUOTE_URL,
+        url: STOCK_FEED_URL,
         timeout: 5000,
         query: {
-            symbol: getNseSymbols(req.query.symbol)
+            q: getNseSymbols(req.query.symbol),
+            symbol: 'null'
         },
         transforms: [unzipper(), extractQuotesJson(), zipper()]
     })(req, res, next);
 });
 
-function sanitizeNumber(input) {
-    var value = _.toNumber(input.replace(',', ''));
-    return _.isNaN(value) ? 0 : value;
-}
 function getNseSymbols(symbolList) {
     var symbols = symbolList.split(',').map(s => decodeURIComponent(s));
     var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s)).join(',');
@@ -103,18 +99,21 @@ function extractQuotesJson() {
                 },
                 (cb) => {
                     var scraped = Buffer.concat(bufferChunks).toString();
-                    let dom = cheerdo.load(scraped)
-                    var maal = JSON.parse(dom('#responseDiv').text());
-                    logger('Scraped JSON -> ' + JSON.stringify(maal));
+                    scraped = scraped.substring(scraped.indexOf("["));
+                    logger(scraped);
 
-                    var reduction = _.map(maal.data, function (quote) {
-                        var symbol = _.has(symToNseSym, quote.symbol) ? quote.symbol : _.findKey(symToNseSym, v => v === quote.symbol) || quote.symbol;
+                    var maal = JSON.parse(scraped);
+                    logger('Scraped JSON -> ' + maal);
+
+                    var reduction = _.map(maal, function (quote) {
+                        let quoteSymbol = quote.e + ":" + quote.t;
+                        let symbol = _.has(symToNseSym, quoteSymbol) ? quoteSymbol : _.findKey(symToNseSym, v => v === quoteSymbol) || quoteSymbol;
+
                         return [symbol,
                             {
                                 's': symbol,
-                                'p': sanitizeNumber(quote.lastPrice),
-                                'c': sanitizeNumber(quote.change),
-                                'r52': quote.low52 + ' - ' + quote.high52
+                                'p': _.toNumber(quote.l_fix), 
+                                'c': _.toNumber(quote.c_fix)
                             }];
                     });
 
