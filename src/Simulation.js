@@ -14,6 +14,9 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
     var trades = _.cloneDeep(tradeStream),
         divvies = dividendStream;
 
+    trades = _.sortBy(trades, 'date');
+    divvies = _.sortBy(divvies, 'date');
+
     function simulate() {
         try {
             var snapshots = [],
@@ -52,7 +55,7 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
             holdings = _.cloneDeep(opening_holdings), // we are going to mutate this one
             mapSales = {},
             divEntry;
-   
+
         _.forEach(trades, t => {
             var sale, buy;
             holdings[t.stock] = holdings[t.stock] || [];
@@ -92,13 +95,13 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
 
                     brokerage = buy.brokerage.mul(qty).div(buy.qty);
                     brokerage = brokerage.plus(sale.brokerage.mul(qty).div(sale.qty));
-                    
+
                     gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, brokerage, isShortTerm));
                     buy.balance -= qty;
                     saleQty -= qty;
                     if (buy.balance === 0) {
                         _.remove(holdings[sale.stock], { id: id });
-                        if (_.isEmpty(holdings[sale.stock])){
+                        if (_.isEmpty(holdings[sale.stock])) {
                             delete holdings[sale.stock];
                         }
                     }

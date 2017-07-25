@@ -64,6 +64,8 @@ module.exports = function (accMapper, snapshotMapper) {
             },
             (snapshot, cb) => {
                 if (!snapshot) { cb(null); return; }
+                
+                // invalidate all cached snapshots & force recompute
                 _snapshotMapper.deleteSnapshots(accountId, err => cb(err));
             },
         ],

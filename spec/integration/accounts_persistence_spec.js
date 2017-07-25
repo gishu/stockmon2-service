@@ -17,7 +17,6 @@ describe('AccountMapper', function () {
     var database, mapper, snapshotMapper;
 
     beforeEach(() => {
-
         database = getDatabase();
         mapper = getAccountMapper(database);
         snapshotMapper = getSnapshotMapper(database);
@@ -85,6 +84,38 @@ describe('AccountMapper', function () {
         });
     });
 
+    it('can accept trades/divs out of order --defect', done => {
+        async.waterfall([
+            cb => parse(helpers.getCsvStream('sample_trades.csv'), cb),
+            (results, cb) => {
+                var anAccount = account.create('Mushu', 'HDFC');
+                anAccount.register(results.trades);
+                anAccount.addDividends(results.dividends);
+                mapper.save(anAccount, (err, savedAccount) => cb(err, savedAccount));
+            },
+            (acc, cb) => {
+                mapper.load(acc.id(), cb)
+            },
+            (acc, cb) => {
+                acc.register([make.makeBuy('2005-06-01', 'HDFC', 5, '1600.60', '60.6')]);
+                acc.addDividends([make.makeDividend('2005-06-12', 'HDFC', '500')]);
+                acc.getAnnualStmts((err, snapshots) => {
+                    cb(err, acc, snapshots);
+                });
+            }
+        ],
+            function (err, acc, snapshots) {
+                if (err) {
+                    done.fail(err.stack);
+                    return;
+                }
+
+                let snapshot = snapshots.forYear(2005);
+                expect(snapshot).not.toBeUndefined();
+                done();
+            });
+    });
+
     it('ERR - cannot persist annual stmts until account has been saved once');
     it('ERR - cannot persist annual stmts until all trades and dividends are saved');
 
@@ -102,7 +133,6 @@ describe('AccountMapper', function () {
                 },
                 (savedAccount, cb) => savedAccount.getAnnualStmts((err, stmts) => cb(err, savedAccount.id(), stmts)),
                 (savedAccountId, stmts, cb) => {
-                    console.log(_.last(stmts).toString());
                     snapshotMapper.saveSnapshots(savedAccountId, stmts, err => cb(err, savedAccountId));
                 }
             ],
@@ -120,17 +150,16 @@ describe('AccountMapper', function () {
             mapper.load(id_under_test, (err, testAccount) => {
                 expect(testAccount.trades().length).toEqual(25); // just last stmt/2016 trades
                 testAccount.getAnnualStmts((err, stmts) => {
-                    if (err){
+                    if (err) {
                         done.fail(err);
-                    } else{
-                        console.log(_.last(stmts).toString());
+                    } else {
 
                         // even optimized load computes the right final stmt
                         expect(_.last(stmts).netGain().toFixed(2)).toEqual('220839.57');
                         done();
                     }
                 })
-                
+
             })
         });
     });
@@ -150,7 +179,7 @@ describe('AccountMapper', function () {
             },
             (acc, cb) => {
                 var trades = [make.makeBuy('2014-05-14', 'TATA MOTORS', 20, '570', '123.45', '0', 'NEW'),
-                    make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
+                make.makeBuy('2014-08-14', 'TATA MOTORS', 5, '450', '23.45', '0', 'NEW')];
                 var divs = [make.makeDividend('2014-05-14', 'TATA MOTORS', '250', '0', 'NEW')];
                 acc.register(trades);
                 acc.addDividends(divs);

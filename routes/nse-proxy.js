@@ -28,6 +28,7 @@ var symToNseSym = {
     "HINDAL": "NSE:HINDALCO",
     "HPCL": "NSE:HINDPETRO",
     "HUL": "NSE:HINDUNILVR",
+    "ITC": "NSE:ITC",
     "IDEA": "NSE:IDEA",
     "L&T": "NSE:LT",
     "L&T FIN": "NSE:L&TFH",
@@ -47,7 +48,9 @@ var symToNseSym = {
     "STEEL STRIPS": "NSE:SSWL",
     "VOLTAS": "NSE:VOLTAS",
     "BFORGE": "NSE:BHARATFORG",
-    "NOCIL": "NSE:NOCIL"
+    "NOCIL": "NSE:NOCIL",
+    "JK TYRE": "NSE:JKTYRE"
+
 };
 
 
