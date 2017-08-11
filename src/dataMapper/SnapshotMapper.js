@@ -96,7 +96,7 @@ module.exports = function getSnapshotMapper(database) {
                     },
                     cb => {
                         db.all(
-                            `select s.date, r.Qty, b.Stock, b.Id as BuyId, b.Price as BuyPrice, s.Id as SaleId, s.Price as SalePrice, r.Brokerage, r.Gain, r.IsShortTerm
+                            `select s.date, r.Qty, b.Stock, b.Id as BuyId, b.Price as BuyPrice, b.date as BuyDate, s.Id as SaleId, s.Price as SalePrice, r.Brokerage, r.Gain, r.IsShortTerm
                                 from StatementGains r
                                 inner join buys b on r.buy_id = b.Id
                                 inner join sales s on r.sale_id = s.Id
@@ -107,7 +107,10 @@ module.exports = function getSnapshotMapper(database) {
                                 if (err) { cb(err); return; }
 
                                 cb(null,
-                                    _.map(rows, row => make.makeGain(moment(row.Date), row.Stock, row.Qty, row.BuyId, row.BuyPrice, row.SaleId, row.SalePrice, row.Brokerage, (row.IsShortTerm !== 0))));
+                                    _.map(rows, row => make.makeGain(
+                                        { date: moment(row.Date), stock: row.Stock, id: row.SaleId, price: row.SalePrice },
+                                        { id: row.BuyId, price: row.BuyPrice, date: moment(row.BuyDate) },
+                                        row.Qty, row.Brokerage, (row.IsShortTerm !== 0))));
                             }
                         )
                     },

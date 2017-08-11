@@ -2,9 +2,8 @@ var parse = require('./util/parse.js');
 var moment = require('moment');
 var _ = require('lodash');
 
-
 function makeTrade(date, stock, qty, price, is_buy, brokerage, notes) {
-    var parsedPrice = parse.toBigNumber(price), 
+    var parsedPrice = parse.toBigNumber(price),
         parsedBrokerage = parse.toBigNumber(brokerage);
 
     return {
@@ -26,23 +25,39 @@ function makeSale(date, stock, qty, price, brokerage, notes) {
 
 
 
-function makeGain(date, stock, qty, buyId, buy_price, saleId, sell_price, brokerage_amt, isShortTerm) {
-
-    var cp = parse.toBigNumber(buy_price),
-        sp = parse.toBigNumber(sell_price),
-        brokerage = parse.toBigNumber(brokerage_amt);
+function makeGain(sale, buy, qty, brokerage_amt, isShortTerm) {
+    let cp = parse.toBigNumber(buy.price),
+        sp = parse.toBigNumber(sale.price),
+        brokerage = parse.toBigNumber(brokerage_amt),
+        buyDate = parse.toDate(buy.date),
+        saleDate = parse.toDate(sale.date);
+    
+    let noOfYears =  saleDate.diff(buyDate, 'years', true).toFixed(3),
+        totalGain = sp.minus(cp).times(qty).minus(brokerage),
+        
+        roi = 0;
+    if (isShortTerm){
+        // simple rate of interest
+        roi = totalGain.div(qty).mul(100).div(cp).div(noOfYears);
+    }else{
+        // cagr
+        let cagrBase = totalGain.div(qty).plus(cp).div(cp);
+        roi = Math.pow(cagrBase, (1/noOfYears)) - 1;
+    }
 
     return {
-        'date': parse.toDate(date),
-        'stock': stock,
+        'date': saleDate,
+        'buyDate': buyDate,
+        'stock': sale.stock,
         'qty': qty,
-        'buyId': buyId,
+        'buyId': buy.id,
         'CP': cp,
-        'saleId': saleId,
+        'saleId': sale.id,
         'SP': sp,
         'brokerage': brokerage,
-        'gain': sp.minus(cp).times(qty).minus(brokerage),
-        'isShortTerm': isShortTerm
+        'gain': totalGain,
+        'isShortTerm': isShortTerm,
+        'roi': Math.round(roi*10000) / 10000  // round to 4 decimal places
     };
 }
 function makeDividend(date, stock, amount, notes) {

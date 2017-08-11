@@ -96,7 +96,7 @@ module.exports = function (openingHoldings, tradeStream, dividendStream, callbac
                     brokerage = buy.brokerage.mul(qty).div(buy.qty);
                     brokerage = brokerage.plus(sale.brokerage.mul(qty).div(sale.qty));
 
-                    gains.push(make.makeGain(sale.date, sale.stock, qty, buy.id, buy.price, sale.id, sale.price, brokerage, isShortTerm));
+                    gains.push(make.makeGain(sale, buy, qty, brokerage, isShortTerm));
                     buy.balance -= qty;
                     saleQty -= qty;
                     if (buy.balance === 0) {

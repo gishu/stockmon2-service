@@ -38,10 +38,11 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                 { name: 'Change', field: 'change', cellClass: 'money' },
                 { name: 'Cost (K)', field: 'cost', type: 'number', cellClass: 'money' },
                 { name: 'Gain (K)', field: 'gain', type: 'number', cellClass: 'money' },
-                { name: 'Percent', field: 'gain_percent', type: 'number', cellClass: 'money' },
-                { name: 'Notes', field: 'notes', type: 'string'}
+                { name: '%', field: 'gain_percent', type: 'number', cellClass: 'money' },
+                { name: 'ROI', field: 'roi', type: 'number', cellClass: 'money' },
+                { name: 'Notes', field: 'notes', type: 'string', width: '20%' }
             ],
-             rowTemplate: `<div ng-class="{'st2-loss':row.entity.gain_percent < -15, 'st2-profit': row.entity.gain_percent > 25}"> 
+            rowTemplate: `<div ng-class="{'st2-loss':row.entity.gain_percent < -15, 'st2-profit': row.entity.gain_percent > 25}"> 
              <div ng-repeat="col in colContainer.renderedColumns track by col.colDef.name"  class="ui-grid-cell" ui-grid-cell></div>
              </div>`,
 
@@ -67,6 +68,7 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                         price: h.price,
                         price_f: h.price.toString(),
                         age: getAgeBin(h.age_months),
+                        ageInYears: (h.age_months / 12).toFixed(2),
                         notes: h.notes
                     }
                 });
@@ -81,7 +83,9 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                         model.cost = new BigNumber(model.price).times(model.qty).div(1000).toFixed(2);
                         model.gain = new BigNumber(quote.p).minus(model.price).times(model.qty).div(1000).toFixed(2);
                         model.gain_percent = new BigNumber(quote.p).minus(model.price).div(model.price).times(100).toFixed(2);
-
+                        model.roi = ((model.ageInYears < 12)
+                            ? (new BigNumber(quote.p).minus(model.price).div(model.price).div(model.ageInYears).mul(100)).toFixed(2)
+                            : (42));
                         model.market_price = quote.p.toFixed(2);
                         model.change = quote.c.toFixed(2);
                     } else {
