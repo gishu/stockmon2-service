@@ -249,16 +249,36 @@ function _getStatement(params, mapper, stmtMapper, callback) {
 function writeSnapshot(snapshot, ws) {
   var csvStream = csv.format({ headers: true })
     .transform(function (row) {
-      return {
-        date: row.date.format('YYYY-MM-DD'),
-        stock: row.stock,
-        cost_price: row.CP ? row.CP.toString() : '',
-        sale_price: row.SP ? row.SP.toString() : '',
-        units: row.qty || '',
-        brokerage: row.brokerage ? row.brokerage.toString() : '',
-        gain: row.gain ? row.gain.toString() : row.amount.toString(),
-        ST: (row.isShortTerm ? "TAX" : "")
-      };
+
+      if (row.qty) {
+        return {
+          date: row.date.format('YYYY-MM-DD'),
+          stock: row.stock,
+          cost_price: row.CP.toString(),
+          buyDate: row.buyDate.format('YYYY-MM-DD'),
+          sale_price: row.SP.toString(),
+          units: row.qty,
+          brokerage: row.brokerage.toString(),
+          gain: row.gain.toString(),
+          roi: row.roi,
+          ST: (row.isShortTerm ? "TAX" : "")
+        }
+      }
+      else {
+        return {
+          date: row.date.format('YYYY-MM-DD'),
+          stock: row.stock,
+          cost_price: '',
+          buyDate: '',
+          sale_price: '',
+          units: '',
+          brokerage: '',
+          gain: row.amount.toString(),
+          roi: '',
+          ST: ''
+        };
+      }
+
     });
 
   csvStream.pipe(ws);
