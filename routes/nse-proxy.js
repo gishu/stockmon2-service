@@ -4,6 +4,7 @@ var logger = require('debug')('st2:nse-rev-proxy');
 var through2 = require('through2');
 let zlib = require('zlib');
 let _ = require('lodash');
+var fs = require('fs');
 
 var STOCK_FEED_URL = 'http://www.google.com/finance/info',
     proxy = require('express-request-proxy');
@@ -19,7 +20,7 @@ var symToNseSym = {
     "COAL IND": "NSE:COALINDIA",
     "CROM GREAVES": "NSE:CGPOWER",
     "CROMPTON ELEC": "NSE:CROMPTON",
-    "EICHER": "BOM:505200",
+    "EICHER": "BSE:505200",
     "EXIDE": "NSE:EXIDEIND",
     "GAIL": "NSE:GAIL",
     "HDFC": "NSE:HDFC",
@@ -51,26 +52,49 @@ var symToNseSym = {
     "NOCIL": "NSE:NOCIL",
     "JK TYRE": "NSE:JKTYRE",
     "ICICI": "NSE:ICICIBANK",
-    "FED BK": "BOM:500469"
+    "FED BK": "BSE:500469"
 
 };
 
+var path = require('path');
+
 
 router.get('/', function (req, res, next) {
-    proxy({
-        url: STOCK_FEED_URL,
-        timeout: 5000,
-        query: {
-            q: getNseSymbols(req.query.symbol),
-            symbol: 'null'
-        },
-        transforms: [unzipper(), extractQuotesJson(), zipper()]
-    })(req, res, next);
+
+    var quotesFile = path.resolve('./quotes_db/quotes.json');
+    logger(quotesFile);
+
+    if (!fs.existsSync(quotesFile)) {
+        logger('Quotes_Db missing - cannot retrieve quotes')
+        res.status(500).end();
+        next();
+    }
+
+    let nseSymbols = getNseSymbols(req.query.symbol);
+
+    var quotes = JSON.parse(fs.readFileSync(quotesFile).toString());
+    var response = _(quotes).filter(q => _.includes(nseSymbols, q.s))
+        .map(q => {
+            let stock = _.findKey(symToNseSym, v => v === q.s);
+            return [stock, { 's': stock, 'p': q.p, 'c': q.c }];
+        })
+        .fromPairs();
+    res.json({ "data": response });
+
+    // proxy({
+    //     url: STOCK_FEED_URL,
+    //     timeout: 5000,
+    //     query: {
+    //         q: getNseSymbols(req.query.symbol),
+    //         symbol: 'null'
+    //     },
+    //     transforms: [unzipper(), extractQuotesJson(), zipper()]
+    // })(req, res, next);
 });
 
 function getNseSymbols(symbolList) {
     var symbols = symbolList.split(',').map(s => decodeURIComponent(s));
-    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s)).join(',');
+    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s));//.join(',');
     return nseSymbolsCsv;
 }
 
@@ -117,7 +141,7 @@ function extractQuotesJson() {
                         return [symbol,
                             {
                                 's': symbol,
-                                'p': _.toNumber(quote.l_fix), 
+                                'p': _.toNumber(quote.l_fix),
                                 'c': _.toNumber(quote.c_fix)
                             }];
                     });
