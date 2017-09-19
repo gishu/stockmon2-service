@@ -12,14 +12,28 @@ if (process.argv.length != 4) {
 
 let quotes = [];
 
+var fileWriteTimeout;
 stockRowReader.selectAll('#pf-view-table > table > tbody > tr', tr => {
     toJson(tr.createReadStream(), (err, quote) => {
+        console.log('%j', quote);
+        quotes.push(quote);
 
-        quotes.push(quote)
-    });
+        if (fileWriteTimeout) {
+            clearTimeout(fileWriteTimeout);
+        }
 
+        fileWriteTimeout = setTimeout(function (count) {
+            if (count != quotes.length) {
+                console.error('Premature dump of quotes? ', count, '-', quotes.length);
+            }
+            fs.createWriteStream(process.argv[3]).end(JSON.stringify(quotes))
+            console.log('Data written to ', process.argv[3]);
+        },
+            2000,
+            quotes.length);
+
+    })
 });
-stockRowReader.on('end', () => fs.createWriteStream(process.argv[3]).end(JSON.stringify(quotes)));
 
 function toJson(rowStream, cb) {
     var jsonTrumpet = trumpet();
@@ -41,7 +55,7 @@ function toJson(rowStream, cb) {
 }
 
 function getNseSymbol(symbol) {
-    console.log(symbol);
+    symbol = symbol.replace('&amp;', '&');
     return (isNaN(parseInt(symbol))) ? 'NSE:' + symbol : 'BSE:' + symbol;
 }
 
@@ -50,7 +64,6 @@ function getNseSymbol(symbol) {
 function getPrice(priceHtml) {
 
     var price = sanitizeNumber(priceHtml);
-    console.log(priceHtml + '\n' + price);
     if (!isNaN(price))
         return price;
 
@@ -63,8 +76,6 @@ function getPrice(priceHtml) {
     match = nestedSpan.exec(priceHtml);
     if (match)
         part2 = match[1];
-    console.log('NestedPrice' + part1 + part2);
-
 
     return sanitizeNumber(part1 + part2);
 }

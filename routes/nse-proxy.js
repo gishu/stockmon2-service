@@ -1,13 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var logger = require('debug')('st2:nse-rev-proxy');
-var through2 = require('through2');
-let zlib = require('zlib');
 let _ = require('lodash');
 var fs = require('fs');
-
-var STOCK_FEED_URL = 'http://www.google.com/finance/info',
-    proxy = require('express-request-proxy');
 
 var symToNseSym = {
     "ADANI POWER": "NSE:ADANIPOWER",
@@ -81,79 +76,12 @@ router.get('/', function (req, res, next) {
         .fromPairs();
     res.json({ "data": response });
 
-    // proxy({
-    //     url: STOCK_FEED_URL,
-    //     timeout: 5000,
-    //     query: {
-    //         q: getNseSymbols(req.query.symbol),
-    //         symbol: 'null'
-    //     },
-    //     transforms: [unzipper(), extractQuotesJson(), zipper()]
-    // })(req, res, next);
 });
 
 function getNseSymbols(symbolList) {
     var symbols = symbolList.split(',').map(s => decodeURIComponent(s));
-    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s));//.join(',');
+    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s));
     return nseSymbolsCsv;
 }
-
-function unzipper() {
-    return {
-        name: 'Unzipper',
-        transform: function () {
-            return zlib.createGunzip();
-        }
-    }
-}
-
-function zipper() {
-    return {
-        name: 'zipper',
-        transform: function () {
-            return zlib.createGzip();
-        }
-    }
-}
-
-function extractQuotesJson() {
-    let bufferChunks = [];
-    return {
-        name: 'RipThatNseQuoteOut',
-        transform: function () {
-            return through2(
-                (chunk, enc, cb) => {
-                    bufferChunks.push(chunk);
-                    cb();
-                },
-                (cb) => {
-                    var scraped = Buffer.concat(bufferChunks).toString();
-                    scraped = scraped.substring(scraped.indexOf("["));
-                    logger(scraped);
-
-                    var maal = JSON.parse(scraped);
-                    logger('Scraped JSON -> ' + maal);
-
-                    var reduction = _.map(maal, function (quote) {
-                        let quoteSymbol = quote.e + ":" + quote.t;
-                        let symbol = _.has(symToNseSym, quoteSymbol) ? quoteSymbol : _.findKey(symToNseSym, v => v === quoteSymbol) || quoteSymbol;
-
-                        return [symbol,
-                            {
-                                's': symbol,
-                                'p': _.toNumber(quote.l_fix),
-                                'c': _.toNumber(quote.c_fix)
-                            }];
-                    });
-
-                    cb(null, JSON.stringify({ 'data': _.fromPairs(reduction) }));
-                }
-            );
-        }
-
-    };
-
-}
-
 
 module.exports = router;
