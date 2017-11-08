@@ -35,7 +35,7 @@ module.exports = function (buys, sales) {
         shortTermLosses = bins[0].sort(ascPriceComparer); // min ST Loss to reduce loss
 
         // preferred order
-        return _.concat(longTermGains, shortTermLosses, shortTermGains, longTermLosses);
+        return _.concat(shortTermLosses, longTermLosses, longTermGains, shortTermGains);
 
     }
     function matchSale(sale) {
