@@ -1,12 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var logger = require('debug')('st2:nse-rev-proxy');
-var through2 = require('through2');
-let zlib = require('zlib');
 let _ = require('lodash');
-
-var STOCK_FEED_URL = 'http://www.google.com/finance/info',
-    proxy = require('express-request-proxy');
+var fs = require('fs');
 
 var symToNseSym = {
     "ADANI POWER": "NSE:ADANIPOWER",
@@ -19,7 +15,7 @@ var symToNseSym = {
     "COAL IND": "NSE:COALINDIA",
     "CROM GREAVES": "NSE:CGPOWER",
     "CROMPTON ELEC": "NSE:CROMPTON",
-    "EICHER": "BOM:505200",
+    "EICHER": "BSE:505200",
     "EXIDE": "NSE:EXIDEIND",
     "GAIL": "NSE:GAIL",
     "HDFC": "NSE:HDFC",
@@ -51,85 +47,41 @@ var symToNseSym = {
     "NOCIL": "NSE:NOCIL",
     "JK TYRE": "NSE:JKTYRE",
     "ICICI": "NSE:ICICIBANK",
-    "FED BK": "BOM:500469"
+    "FED BK": "BSE:500469"
 
 };
 
+var path = require('path');
+
 
 router.get('/', function (req, res, next) {
-    proxy({
-        url: STOCK_FEED_URL,
-        timeout: 5000,
-        query: {
-            q: getNseSymbols(req.query.symbol),
-            symbol: 'null'
-        },
-        transforms: [unzipper(), extractQuotesJson(), zipper()]
-    })(req, res, next);
+
+    var quotesFile = path.resolve('./quotes_db/quotes.json');
+    logger(quotesFile);
+
+    if (!fs.existsSync(quotesFile)) {
+        logger('Quotes_Db missing - cannot retrieve quotes')
+        res.status(500).end();
+        next();
+    }
+
+    let nseSymbols = getNseSymbols(req.query.symbol);
+
+    var quotes = JSON.parse(fs.readFileSync(quotesFile).toString());
+    var response = _(quotes).filter(q => _.includes(nseSymbols, q.s))
+        .map(q => {
+            let stock = _.findKey(symToNseSym, v => v === q.s);
+            return [stock, { 's': stock, 'p': q.p, 'c': q.c }];
+        })
+        .fromPairs();
+    res.json({ "data": response });
+
 });
 
 function getNseSymbols(symbolList) {
     var symbols = symbolList.split(',').map(s => decodeURIComponent(s));
-    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s)).join(',');
+    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s));
     return nseSymbolsCsv;
 }
-
-function unzipper() {
-    return {
-        name: 'Unzipper',
-        transform: function () {
-            return zlib.createGunzip();
-        }
-    }
-}
-
-function zipper() {
-    return {
-        name: 'zipper',
-        transform: function () {
-            return zlib.createGzip();
-        }
-    }
-}
-
-function extractQuotesJson() {
-    let bufferChunks = [];
-    return {
-        name: 'RipThatNseQuoteOut',
-        transform: function () {
-            return through2(
-                (chunk, enc, cb) => {
-                    bufferChunks.push(chunk);
-                    cb();
-                },
-                (cb) => {
-                    var scraped = Buffer.concat(bufferChunks).toString();
-                    scraped = scraped.substring(scraped.indexOf("["));
-                    logger(scraped);
-
-                    var maal = JSON.parse(scraped);
-                    logger('Scraped JSON -> ' + maal);
-
-                    var reduction = _.map(maal, function (quote) {
-                        let quoteSymbol = quote.e + ":" + quote.t;
-                        let symbol = _.has(symToNseSym, quoteSymbol) ? quoteSymbol : _.findKey(symToNseSym, v => v === quoteSymbol) || quoteSymbol;
-
-                        return [symbol,
-                            {
-                                's': symbol,
-                                'p': _.toNumber(quote.l_fix), 
-                                'c': _.toNumber(quote.c_fix)
-                            }];
-                    });
-
-                    cb(null, JSON.stringify({ 'data': _.fromPairs(reduction) }));
-                }
-            );
-        }
-
-    };
-
-}
-
 
 module.exports = router;
