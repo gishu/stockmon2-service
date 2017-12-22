@@ -38,7 +38,7 @@ function makeGain(sale, buy, qty, brokerage_amt, isShortTerm) {
         roi = 0;
     if (isShortTerm){
         // simple rate of interest
-        roi = totalGain.div(qty).mul(100).div(cp).div(noOfYears);
+        roi = totalGain.div(qty).div(cp).div(noOfYears);
     }else{
         // cagr
         let cagrBase = totalGain.div(qty).plus(cp).div(cp);

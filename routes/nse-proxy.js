@@ -47,7 +47,8 @@ var symToNseSym = {
     "NOCIL": "NSE:NOCIL",
     "JK TYRE": "NSE:JKTYRE",
     "ICICI": "NSE:ICICIBANK",
-    "FED BK": "BSE:500469"
+    "FED BK": "BSE:500469",
+    "BAJAJFIN": "NSE:BAJFINANCE"
 
 };
 
