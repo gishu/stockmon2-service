@@ -144,12 +144,23 @@ router.get('/:id/snapshots/:year(\\d{4})/gains', (req, res) => {
       return;
     }
 
-    var tmpFile = tmp.fileSync(CSV_OPTIONS),
-      ws = fs.createWriteStream(tmpFile.name),
-      year = _.toInteger(req.params.year);
+    res.format({
+      'application/json': () => {
+        res.json({
+          gains: snapshot.gains(),
+          dividends: snapshot.dividends()
+        });
+      },
+      'text/csv': () => {
+        var tmpFile = tmp.fileSync(CSV_OPTIONS),
+          ws = fs.createWriteStream(tmpFile.name),
+          year = _.toInteger(req.params.year);
 
-    ws.on('finish', () => res.download(tmpFile.name, 'snapshot' + year + '.csv'));
-    writeSnapshot(snapshot, ws);
+        ws.on('finish', () => res.download(tmpFile.name, 'snapshot' + year + '.csv'));
+        writeSnapshot(snapshot, ws);
+      }
+    });
+
   });
 });
 

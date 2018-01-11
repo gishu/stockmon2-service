@@ -31,19 +31,22 @@ function makeGain(sale, buy, qty, brokerage_amt, isShortTerm) {
         brokerage = parse.toBigNumber(brokerage_amt),
         buyDate = parse.toDate(buy.date),
         saleDate = parse.toDate(sale.date);
-    
-    let noOfYears =  saleDate.diff(buyDate, 'years', true).toFixed(3),
+
+    let noOfYears = saleDate.diff(buyDate, 'years', true).toFixed(3),
         totalGain = sp.minus(cp).times(qty).minus(brokerage),
-        
+
         roi = 0;
-    if (isShortTerm){
-        // simple rate of interest
-        roi = totalGain.div(qty).div(cp).div(noOfYears);
-    }else{
-        // cagr
-        let cagrBase = totalGain.div(qty).plus(cp).div(cp);
-        roi = Math.pow(cagrBase, (1/noOfYears)) - 1;
+    if (cp.greaterThan(0) && noOfYears > 0.1) {
+        if (isShortTerm) {
+            // simple rate of interest
+            roi = totalGain.div(qty).div(cp).div(noOfYears);
+        } else {
+            // cagr
+            let cagrBase = totalGain.div(qty).plus(cp).div(cp);
+            roi = Math.pow(cagrBase, (1 / noOfYears)) - 1;
+        }
     }
+
 
     return {
         'date': saleDate,
@@ -57,7 +60,7 @@ function makeGain(sale, buy, qty, brokerage_amt, isShortTerm) {
         'brokerage': brokerage,
         'gain': totalGain,
         'isShortTerm': isShortTerm,
-        'roi': Math.round(roi*10000) / 10000  // round to 4 decimal places
+        'roi': Math.round(roi * 10000) / 10000  // round to 4 decimal places
     };
 }
 function makeDividend(date, stock, amount, notes) {
