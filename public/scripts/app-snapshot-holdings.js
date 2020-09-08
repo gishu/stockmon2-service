@@ -87,7 +87,6 @@ app.controller('MainCtrl', ['$scope', '$location', 'TradeService', 'StockQuoteSe
                             ? (new BigNumber(quote.p).minus(model.price).div(model.price).div(model.ageInYears).mul(100)).toFixed(2)
                             : (42));
                         model.market_price = quote.p.toFixed(2);
-                        model.change = quote.c.toFixed(2);
                     } else {
                         console.error('Did not get quote for ' + model.stock);
                     }

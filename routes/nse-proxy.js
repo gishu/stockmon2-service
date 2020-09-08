@@ -1,90 +1,98 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-var logger = require('debug')('st2:nse-rev-proxy');
-let _ = require('lodash');
-var fs = require('fs');
+var logger = require("debug")("st2:nse-rev-proxy");
+let _ = require("lodash");
+var fs = require("fs");
 
 var symToNseSym = {
-    "ADANI POWER": "NSE:ADANIPOWER",
-    "ALOK": "NSE:ALOKTEXT",
-    "AND BANK": "NSE:ANDHRABANK",
-    "ASHOK": "NSE:ASHOKLEY",
-    "BLUE STAR": "NSE:BLUESTARCO",
-    "CAN BANK": "NSE:CANBK",
-    "CENTURY": "NSE:CENTURYTEX",
-    "COAL IND": "NSE:COALINDIA",
-    "CROM GREAVES": "NSE:CGPOWER",
-    "CROMPTON ELEC": "NSE:CROMPTON",
-    "EICHER": "BSE:505200",
-    "EXIDE": "NSE:EXIDEIND",
-    "GAIL": "NSE:GAIL",
-    "HDFC": "NSE:HDFC",
-    "HDFCBANK": "NSE:HDFCBANK",
-    "HIND ZINC": "NSE:HINDZINC",
-    "HINDAL": "NSE:HINDALCO",
-    "HPCL": "NSE:HINDPETRO",
-    "HUL": "NSE:HINDUNILVR",
-    "ITC": "NSE:ITC",
-    "IDEA": "NSE:IDEA",
-    "L&T": "NSE:LT",
-    "L&T FIN": "NSE:L&TFH",
-    "LIC": "NSE:LICHSGFIN",
-    "M&M": "NSE:M&M",
-    "MARUTI": "NSE:MARUTI",
-    "NTPC": "NSE:NTPC",
-    "ONGC": "NSE:ONGC",
-    "POWERG": "NSE:POWERGRID",
-    "SAIL": "NSE:SAIL",
-    "SBI": "NSE:SBIN",
-    "TATA MOTORS": "NSE:TATAMOTORS",
-    "TATA POW": "NSE:TATAPOWER",
-    "TATA ST": "NSE:TATASTEEL",
-    "TCS": "NSE:TCS",
-    "TECHM": "NSE:TECM",
-    "STEEL STRIPS": "NSE:SSWL",
-    "VOLTAS": "NSE:VOLTAS",
-    "BFORGE": "NSE:BHARATFORG",
-    "NOCIL": "NSE:NOCIL",
-    "JK TYRE": "NSE:JKTYRE",
-    "ICICI": "NSE:ICICIBANK",
-    "FED BK": "NSE:FEDERALBNK",
-    "BAJAJFIN": "NSE:BAJFINANCE",
-    "8KMILES": "BSE:8KMILES",
-    "MGL": "NSE:MGL"
-
+  "ADANI POWER": "ADANIPOWER",
+  ALOK: "ALOKTEXT",
+  "AND BANK": "ANDHRABANK",
+  ASHOK: "ASHOKLEY",
+  "BLUE STAR": "BLUESTARCO",
+  "CAN BANK": "CANBK",
+  CENTURY: "CENTURYTEX",
+  "COAL IND": "COALINDIA",
+  "CROM GREAVES": "CGPOWER",
+  "CROMPTON ELEC": "CROMPTON",
+  EICHER: "EICHERMOT",
+  EXIDE: "EXIDEIND",
+  "HIND ZINC": "HINDZINC",
+  HINDAL: "HINDALCO",
+  HPCL: "HINDPETRO",
+  HUL: "HINDUNILVR",
+  "L&T": "LT",
+  "L&T FIN": "L&TFH",
+  LIC: "LICHSGFIN",
+  "M&M": "M&M",
+  POWERG: "POWERGRID",
+  SBI: "SBIN",
+  "TATA MOTORS": "TATAMOTORS",
+  "TATA POW": "TATAPOWER",
+  "TATA ST": "TATASTEEL",
+  TECHM: "TECM",
+  "STEEL STRIPS": "SSWL",
+  BFORGE: "BHARATFORG",
+  "JK TYRE": "JKTYRE",
+  ICICI: "ICICIBANK",
+  "FED BK": "FEDERALBNK",
+  BAJAJFIN: "BAJFINANCE",
+  PAGE: "PAGEIND",
+  "GOV-SGB": "GOV-SGB",
 };
 
-var path = require('path');
+var path = require("path");
+var parse = require("csv-parse");
 
+router.get("/", function (req, res) {
+  // check for missing symbol query param
+  if (!req.query.symbol) {
+    res
+      .status(400)
+      .json("Missing symbol param - specify stocks to retrieve prices");
+    return;
+  }
 
-router.get('/', function (req, res, next) {
+  var quotesFile = path.resolve("./quotes_db/quotes.csv");
 
-    var quotesFile = path.resolve('./quotes_db/quotes.json');
-    logger(quotesFile);
+  // check for missing file
+  if (!fs.existsSync(quotesFile)) {
+    logger("Quotes_Db missing - cannot retrieve quotes");
+  }
+  let parser = parse(),
+    quotes = [],
+    quoteMap = {};
 
-    if (!fs.existsSync(quotesFile)) {
-        logger('Quotes_Db missing - cannot retrieve quotes')
-        res.status(500).end();
-        next();
+  parser.on("error", console.log);
+
+  parser.on("readable", () => {
+    let record;
+    while ((record = parser.read())) {
+      quotes.push(record);
     }
+  });
 
-    let nseSymbols = getNseSymbols(req.query.symbol);
+  parser.on("end", () => {
+    quoteMap = _.fromPairs(quotes);
 
-    var quotes = JSON.parse(fs.readFileSync(quotesFile).toString());
-    var response = _(quotes).filter(q => _.includes(nseSymbols, q.s))
-        .map(q => {
-            let stock = _.findKey(symToNseSym, v => v === q.s);
-            return [stock, { 's': stock, 'p': q.p, 'c': q.c }];
-        })
-        .fromPairs();
-    res.json({ "data": response });
+    let response = _(req.query.symbol.split(","))
+      .map(decodeURIComponent)
+      .map((stock) => {
+        let nseSymbol = symToNseSym[stock] || stock;
+        return [stock, { s: stock, p: quoteMap[nseSymbol] || 0 }];
+      })
+      .fromPairs();
 
+    res.status(200).json({ data: response });
+  });
+
+  fs.createReadStream(quotesFile).pipe(parser);
 });
 
 function getNseSymbols(symbolList) {
-    var symbols = symbolList.split(',').map(s => decodeURIComponent(s));
-    var nseSymbolsCsv = _.map(symbols, s => (symToNseSym[s] || s));
-    return nseSymbolsCsv;
+  var symbols = symbolList.split(",").map((s) => decodeURIComponent(s));
+  var nseSymbolsCsv = _.map(symbols, (s) => symToNseSym[s] || s);
+  return nseSymbolsCsv;
 }
 
 module.exports = router;
