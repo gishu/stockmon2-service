@@ -39,6 +39,8 @@ var symToNseSym = {
   BAJAJFIN: "BAJFINANCE",
   PAGE: "PAGEIND",
   "GOV-SGB": "GOV-SGB",
+  HCL: "HCLTECH",
+  CANFIN: "CANFINHOME"
 };
 
 var path = require("path");
